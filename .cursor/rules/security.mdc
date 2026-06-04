@@ -1,0 +1,11 @@
+# Rule: Absolute Security & Auth Policies
+
+## Context
+DNA Music handles sensitive student and corporate data. Security is our highest priority metric.
+
+## Hard Constraints
+1. **Zero Hardcoded Secrets**: Absolutely no passwords, JWT secrets, database connection strings, or private keys allowed in code. Use `.env` files and process environment variables exclusively.
+2. **Timing Attack Mitigation**: Authentication failure flows must exhibit uniform response times. If an email does not exist in the database, execute a dummy password hash verification to consume equivalent CPU cycles, preventing malicious user enumeration.
+3. **Generic Error Messages**: Never return descriptive auth errors such as "Email not found" or "Incorrect password". The only acceptable response for login failure is a generic `"Invalid credentials"` message.
+4. **Password Cryptography**: Always use `bcrypt` with an optimal work factor (salt rounds >= 10) to secure passwords.
+5. **Secure Headers & CORS**: Explicitly configure CORS to restrict unauthorized origins. Integrate `helmet` middleware in NestJS to secure HTTP headers.

@@ -1,0 +1,13 @@
+# Rule: NestJS Backend Standards
+
+## Architectural Pattern
+- **Modular Design**: Every feature must have its own isolated module directory (e.g., `auth/`, `headquarters/`, `students/`). Each module should cleanly encapsulate its respective Controller, Service, and Prisma Data Access.
+- **Strict Typing**: Leverage TypeScript to its full capabilities. Avoid the `any` keyword entirely.
+
+## Business Logic & Database (Prisma)
+1. **Data Aggregations**: For analytics (e.g., `GET /api/stats`), use Prisma aggregate queries (`_count`, `_groupBy`). Generating metrics by pulling all raw rows into Node.js/JavaScript memory is strictly forbidden.
+2. **Role-Based Access Control (RBAC)**: Protect routes using custom NestJS Guards (`AuthGuard` and `RolesGuard`). 
+   - `ADMIN` has unrestricted global visibility.
+   - `OPERADOR` is strictly bound to data belonging to their assigned `headquarterId`. Ensure contextual multi-tenancy filters are applied dynamically in the services.
+3. **Data Lifecycle**: Implement Soft Delete mechanics where reasonable (retaining rows with a `deletedAt` timestamp instead of physically removing them from PostgreSQL).
+4. **Input Validation**: Enforce strict DTO validation using `class-validator` and `class-transformer`.

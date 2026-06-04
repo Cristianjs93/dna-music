@@ -1,0 +1,10 @@
+# Rule: React Frontend Standards
+
+## Core Principles
+- **Functionality > Aesthetics**: Clean, working code, cohesive state management, and strict integration with the API take precedence over intricate UI/UX design.
+- **TypeScript First**: Define solid Interfaces or Types for all API responses, User session objects, and Component Props.
+
+## State & Auth Flow
+1. **Token Persistence**: Securely store the JWT token upon a successful login. 
+2. **HTTP Authorization Header**: Intercept all outgoing HTTP requests to protected routes and dynamically append the token using the `Authorization: Bearer <JWT_TOKEN>` standard.
+3. **Conditional Rendering**: Dynamically adapt views based on user roles (`ADMIN` vs. `OPERADOR`). Form inputs, location selectors, and navigation links should hide or disable gracefully based on permission states.

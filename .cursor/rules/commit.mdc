@@ -1,0 +1,18 @@
+# Rule: Git & Commit Standards
+
+## Context
+We maintain a pristine, semantic, and highly descriptive commit history. A single atomic commit containing the whole project is strictly prohibited.
+
+## Guidelines
+1. **Conventional Commits**: Every single commit message must follow the Conventional Commits specification:
+   - `feat: ...` for new features (e.g., adding an endpoint, building a form).
+   - `fix: ...` for bug fixes (e.g., fixing a broken JWT validation).
+   - `docs: ...` for documentation changes only (e.g., updating README or analysis files).
+   - `chore: ...` for repository maintenance, dependencies, or config tweaks.
+   - `refactor: ...` for code changes that neither fix a bug nor add a feature.
+   - `test: ...` for testing implementations and changes.
+
+2. **Atomic Commits**: Commit early and often. Group changes logically per section or sub-task (e.g., `feat: setup prisma schema and initial migrations`).
+
+3. **Branching**: All work must be conducted in descriptive branches branching off `main`. 
+   - Feature format: `feature/name-of-feature` (e.g., `feature/filtro-por-sede`).

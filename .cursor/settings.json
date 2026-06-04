@@ -1,0 +1,25 @@
+{
+    "name": "DNA Music",
+    "version": "1.0.0",
+    "projectType": "monorepo",
+    "primaryLanguages": ["typescript", "javascript"],
+    "backend": {
+      "framework": "nestjs",
+      "orm": "prisma",
+      "database": "postgresql"
+    },
+    "frontend": {
+      "framework": "react"
+    },
+    "preferredPackageManger": "npm",
+    "rulesDirectory": ".cursor/rules",
+    "enforceStrictTyping": true,
+    "permissions": {
+        "deny": [
+          "Read(**/.env)",
+          "Write(**/.env)"
+        ]
+      },
+    "include": ["api/**", "web/**", "CLAUDE.md", "README.md", ".cursor/**"],
+    "exclude": ["**/node_modules/**", "**/dist/**", "**/coverage/**", ".git/**"]
+}

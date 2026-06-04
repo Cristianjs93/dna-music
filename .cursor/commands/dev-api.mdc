@@ -1,0 +1,9 @@
+# Command: Development Backend API
+
+## Purpose
+Starts the NestJS backend application in development mode with watch tools enabled.
+
+## Execution
+From the root directory, run:
+```bash
+cd api && npm run start:dev

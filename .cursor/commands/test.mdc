@@ -1,0 +1,12 @@
+# Command: Test Suite Execution
+
+## Purpose
+Runs automated tests for the NestJS backend API.
+
+## Execution Options
+From the `api/` directory:
+- **Run Unit Tests**: `npm run test`
+- **Run Tests with Coverage**: `npm run test:cov`
+
+## Constraints
+- Ensure database mock states or test databases are configured correctly if executing integrations, preventing overrides to development seed databases[cite: 132].

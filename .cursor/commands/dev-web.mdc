@@ -1,0 +1,9 @@
+# Command: Development Frontend Web
+
+## Purpose
+Starts the React frontend application in development mode.
+
+## Execution
+From the root directory, run:
+```bash
+cd web && npm run dev

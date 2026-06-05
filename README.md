@@ -148,7 +148,7 @@ git pull origin main
 
 Commit style follows **Conventional Commits** (`feat`, `fix`, `refactor`, `docs`, `chore`, `test`). The history was built incrementally — one logical change per commit (schema → module → tests → frontend layer, etc.).
 
-Extended Git workflow answers: [git_respuestas.md](./git_respuestas.md) (if present in submission).
+Full Git workflow answers (Section 7): [git_respuestas.md](./git_respuestas.md).
 
 ## Project status
 

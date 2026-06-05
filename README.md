@@ -32,7 +32,7 @@ This repository implements that logic step by step: a REST API, a PostgreSQL dat
 | Backend  | NestJS, TypeScript |
 | Database | PostgreSQL, Prisma |
 | API docs | Swagger (OpenAPI)  |
-| Frontend | React (pending)    |
+| Frontend | React, Vite, Tailwind, PrimeReact |
 | CI/CD    | GitHub Actions     |
 
 ## Running the project locally
@@ -63,7 +63,14 @@ The API is available at `http://localhost:3000/api`.
 
 ### 2. Frontend (`web/`)
 
-_Pending — instructions will be added once the web module is ready._
+```bash
+cd web
+npm install
+cp .env.example .env
+npm run dev
+```
+
+The app runs at `http://localhost:5173`. Ensure `CORS_ORIGINS` in `api/.env` includes `http://localhost:5173`.
 
 ## Test credentials
 

@@ -1,0 +1,24 @@
+# Command: Database Seed
+
+## Purpose
+
+Loads initial data required by the technical test PDF into PostgreSQL.
+
+## Prerequisites
+
+1. PostgreSQL running and `api/.env` configured.
+2. Migrations applied: `cd api && npm run db:migrate` (or `npm run db:migrate:deploy` in CI).
+
+## Execution
+
+```bash
+cd api && npm run db:seed
+```
+
+## Full local DB setup
+
+```bash
+cd api && npm run db:setup
+```
+
+Runs: generate → migrate deploy → seed.

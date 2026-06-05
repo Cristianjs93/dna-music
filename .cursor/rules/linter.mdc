@@ -5,13 +5,25 @@ alwaysApply: true
 # Rule: Code Quality, Linting, & Formatting
 
 ## Context
+
 Code readability and formatting consistency are strictly enforced via ESLint and Prettier configurations embedded in the projects.
 
+## Mandatory agent workflow (before every final response)
+
+After **any** edit to source files, the agent MUST complete this checklist **before** replying to the user:
+
+1. **IDE diagnostics**: Run `ReadLints` on every file created or modified in the session. Fix all reported errors; do not hand off broken TypeScript.
+2. **Project lint** (when `api/` or `web/` changed):
+   - Backend: `cd api && npm run lint`
+   - Frontend: `cd web && npm run lint`
+3. If any step fails, fix the code and repeat from step 1. **Do not** claim the task is done while errors remain.
+
 ## Guidelines
-1. **Static Analysis Compliance**: All code generated must comply fully with standard TypeScript rules defined inside `api/eslintrc.js` and frontend configuration targets.
+
+1. **Static Analysis Compliance**: All code generated must comply fully with standard TypeScript rules defined in `api/eslint.config.mjs` and frontend configuration targets.
 2. **Key Constraints**:
    - **Strict Types**: Explicit return types are highly encouraged for NestJS Controller Actions and Service Methods. Do not bypass the linter using `// eslint-disable-next-line`.
    - **Unused Code**: Dead variables, dangling imports, or unreachable blocks must be stripped immediately before finalizing files.
-   - **Formatting**: Adhere to Prettier styles (Trailing commas, semi-colons, single quotes where standardized per directory context).
-3. **Pre-commit Routine**: Prior to pushing code, ensure codebases pass:
-   - `npm run lint` within respective folders to verify error-free compilations.
+   - **Formatting**: Adhere to Prettier styles (trailing commas, semi-colons, single quotes where standardized per directory context).
+3. **Prisma scripts**: Files under `api/prisma/*.ts` are TypeScript; validate with `ReadLints` after edits. Run `npm run db:generate` if the schema changed before judging Prisma client types.
+4. **Pre-commit routine**: Prior to pushing code, ensure codebases pass `npm run lint` within respective folders.

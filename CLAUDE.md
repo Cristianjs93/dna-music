@@ -12,7 +12,8 @@ To manage development execution blocks, you can read commands directly via the e
 - **Run Backend**: Reference `.cursor/commands/dev-api`
 - **Run Frontend**: Reference `.cursor/commands/dev-web`
 - **Run Tests**: Reference `.cursor/commands/test` 
-- **Run Documentation Suite**: Reference `.cursor/commands/swagger` 
+- **Run Documentation Suite**: Reference `.cursor/commands/swagger`
+- **Database Seed**: Reference `.cursor/commands/db-seed` 
 
 ## 🤖 AI Alignment & Modular Rules
 Please read and closely adhere to our distinct rule manuals situated under `.cursor/rules/` before writing code modifications:

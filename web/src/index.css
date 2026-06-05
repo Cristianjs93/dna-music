@@ -4,6 +4,9 @@
 
 :root {
   color-scheme: dark;
+  --dna-control-h: 2.75rem;
+  --dna-control-px: 0.875rem;
+  --dna-control-py: 0.6875rem;
 }
 
 body {
@@ -14,27 +17,123 @@ body {
   @apply min-h-screen;
 }
 
-/* ── Inputs & form controls ── */
-.p-inputtext,
-.p-password-input,
-.p-dropdown,
-.p-calendar .p-inputtext,
-.p-inputnumber-input {
-  @apply w-full bg-dna-surface text-white;
-  border: 1px solid #4a4a4a !important;
-  border-radius: 0.375rem;
-  padding: 0.625rem 0.875rem !important;
+/* Dark logo → white on dark backgrounds */
+.dna-logo {
+  filter: brightness(0) invert(1);
 }
 
-.p-inputtext:enabled:focus,
-.p-password-input:enabled:focus,
-.p-dropdown:not(.p-disabled).p-focus,
-.p-calendar .p-inputtext:enabled:focus {
+/* ── Unified form controls (.dna-control) ── */
+.dna-control.p-inputtext,
+.dna-control.p-password-input {
+  @apply w-full bg-dna-surface text-white;
+  min-height: var(--dna-control-h) !important;
+  height: var(--dna-control-h) !important;
+  padding: var(--dna-control-py) var(--dna-control-px) !important;
+  line-height: 1.375 !important;
+  font-size: 0.9375rem !important;
+  border: 1px solid #4a4a4a !important;
+  border-radius: 0.375rem;
+  box-sizing: border-box !important;
+}
+
+.dna-control.p-inputtext:enabled:focus,
+.dna-control.p-password-input:enabled:focus {
   border-color: #fdb913 !important;
   box-shadow: 0 0 0 1px #fdb913 !important;
   outline: none;
 }
 
+/* Dropdown */
+.dna-control.p-dropdown {
+  @apply bg-dna-surface text-white;
+  width: 100%;
+  min-height: var(--dna-control-h);
+  height: var(--dna-control-h);
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid #4a4a4a !important;
+  border-radius: 0.375rem;
+  box-sizing: border-box;
+}
+
+.dna-control.p-dropdown:not(.p-disabled).p-focus {
+  border-color: #fdb913 !important;
+  box-shadow: 0 0 0 1px #fdb913 !important;
+}
+
+.dna-control.p-dropdown .p-dropdown-label {
+  padding: var(--dna-control-py) var(--dna-control-px) !important;
+  display: flex !important;
+  align-items: center !important;
+  line-height: 1.375 !important;
+  font-size: 0.9375rem !important;
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  flex: 1;
+  min-height: 0;
+}
+
+.dna-control.p-dropdown .p-dropdown-label.p-placeholder {
+  @apply text-dna-muted;
+}
+
+.dna-control.p-dropdown .p-dropdown-trigger {
+  width: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fdb913;
+}
+
+/* Calendar */
+.dna-control.p-calendar {
+  width: 100%;
+  display: inline-flex;
+  align-items: stretch;
+  height: var(--dna-control-h);
+}
+
+.dna-control.p-calendar .p-inputtext {
+  flex: 1;
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+  border-right: none !important;
+}
+
+.dna-control.p-calendar .p-datepicker-trigger {
+  width: var(--dna-control-h) !important;
+  height: var(--dna-control-h) !important;
+  border: 1px solid #4a4a4a !important;
+  border-left: none !important;
+  border-radius: 0 0.375rem 0.375rem 0 !important;
+  background: #1e1e1e !important;
+  color: #fdb913 !important;
+}
+
+.dna-control.p-calendar.p-focus .p-inputtext,
+.dna-control.p-calendar.p-focus .p-datepicker-trigger {
+  border-color: #fdb913 !important;
+}
+
+/* Password */
+.dna-control.p-password {
+  width: 100%;
+  display: block;
+}
+
+.dna-control.p-password .p-password-input {
+  width: 100% !important;
+}
+
+.dna-control.p-password .p-input-icon-right {
+  top: 50%;
+  transform: translateY(-50%);
+  margin-top: 0;
+  right: 0.75rem;
+}
+
+/* Dropdown & datepicker panels */
 .p-dropdown-panel,
 .p-datepicker {
   @apply bg-dna-surface text-white;
@@ -43,11 +142,71 @@ body {
 
 .p-dropdown-panel .p-dropdown-item {
   @apply text-white;
+  padding: 0.625rem 0.875rem !important;
 }
 
 .p-dropdown-panel .p-dropdown-item.p-highlight {
   background: #fdb913 !important;
   color: #000 !important;
+}
+
+/* ── Buttons (.dna-btn) ── */
+.dna-btn {
+  font-weight: 600;
+  border-radius: 0.375rem;
+  padding: 0.625rem 1.25rem;
+  font-size: 0.9375rem;
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.dna-btn-primary.p-button {
+  @apply border-dna-gold bg-dna-gold text-black;
+}
+
+.dna-btn-primary.p-button:enabled:hover {
+  @apply border-dna-gold-dark bg-dna-gold-dark text-black;
+}
+
+.dna-btn-secondary.p-button {
+  border: 1px solid #4a4a4a !important;
+  background: #1e1e1e !important;
+  color: #fff !important;
+}
+
+.dna-btn-secondary.p-button:enabled:hover {
+  border-color: #6b6b6b !important;
+  background: #2a2a2a !important;
+}
+
+.dna-btn-ghost.p-button {
+  border: 1px solid transparent !important;
+  background: transparent !important;
+  color: #a3a3a3 !important;
+}
+
+.dna-btn-ghost.p-button:enabled:hover {
+  border-color: #4a4a4a !important;
+  color: #fdb913 !important;
+  background: transparent !important;
+}
+
+.dna-btn-danger.p-button {
+  border: 1px solid #ef4444 !important;
+  background: #ef4444 !important;
+  color: #fff !important;
+}
+
+.dna-btn-danger.p-button:enabled:hover {
+  border-color: #dc2626 !important;
+  background: #dc2626 !important;
+}
+
+/* Login CTA */
+.dna-btn-login.p-button {
+  min-height: 3rem;
+  font-size: 1rem;
+  letter-spacing: 0.02em;
+  padding: 0.75rem 1.5rem;
 }
 
 /* ── Dialogs ── */
@@ -89,6 +248,7 @@ body {
   border: 1px solid #6b6b6b !important;
   background: #1e1e1e !important;
   border-radius: 0.375rem;
+  min-height: 2.25rem;
 }
 
 .p-paginator .p-dropdown .p-dropdown-label {
@@ -116,32 +276,30 @@ body {
 
 /* ── Table search ── */
 .table-search {
+  position: relative;
   min-width: 14rem;
 }
 
 .table-search .p-inputicon {
   color: #a3a3a3;
-  left: 0.75rem;
+  left: 0.875rem;
+  z-index: 1;
+  pointer-events: none;
 }
 
-.table-search-input {
-  padding-left: 2.5rem !important;
+.table-search .dna-control.table-search-input {
+  padding-top: var(--dna-control-py) !important;
+  padding-right: var(--dna-control-px) !important;
+  padding-bottom: var(--dna-control-py) !important;
+  padding-left: 2.75rem !important;
   min-width: 14rem;
 }
 
-/* ── Primary / CTA buttons ── */
-.btn-dna-primary.p-button {
-  @apply border-dna-gold bg-dna-gold font-semibold text-black;
-}
-
-.btn-dna-primary.p-button:enabled:hover {
-  @apply border-dna-gold-dark bg-dna-gold-dark text-black;
-}
-
-.p-button.p-button-primary {
-  @apply border-dna-gold bg-dna-gold text-black;
-}
-
-.p-button.p-button-primary:enabled:hover {
-  @apply border-dna-gold-dark bg-dna-gold-dark;
+/* DataTable inline filters */
+.p-datatable .p-column-filter .p-inputtext {
+  min-height: 2.25rem;
+  padding: 0.5rem 0.75rem !important;
+  border: 1px solid #4a4a4a !important;
+  border-radius: 0.375rem;
+  font-size: 0.875rem !important;
 }

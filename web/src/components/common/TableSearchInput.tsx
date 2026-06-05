@@ -1,6 +1,6 @@
 import { IconField } from 'primereact/iconfield';
 import { InputIcon } from 'primereact/inputicon';
-import { InputText } from 'primereact/inputtext';
+import { DnaInputText } from '@/components/ui/DnaInputText';
 
 interface TableSearchInputProps {
   value: string;
@@ -16,7 +16,7 @@ export function TableSearchInput({
   return (
     <IconField iconPosition="left" className="table-search">
       <InputIcon className="pi pi-search" />
-      <InputText
+      <DnaInputText
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}

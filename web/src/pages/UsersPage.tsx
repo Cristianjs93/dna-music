@@ -6,11 +6,9 @@ import { Column } from 'primereact/column';
 import { ConfirmDialog } from 'primereact/confirmdialog';
 import { DataTable, type DataTableFilterMeta } from 'primereact/datatable';
 import { Dialog } from 'primereact/dialog';
-import { Dropdown } from 'primereact/dropdown';
-import { InputText } from 'primereact/inputtext';
-import { Password } from 'primereact/password';
 import { Toast } from 'primereact/toast';
 import { FormField } from '@/components/common/FormField';
+import { DnaButton, DnaDropdown, DnaInputText, DnaPassword } from '@/components/ui';
 import { PageHeader } from '@/components/common/PageHeader';
 import { TableSearchInput } from '@/components/common/TableSearchInput';
 import { listHeadquarters } from '@/services/headquarters.service';
@@ -235,10 +233,10 @@ export default function UsersPage() {
         title="Usuarios"
         subtitle="Gestión de cuentas internas y roles de acceso."
         action={
-          <Button
+          <DnaButton
+            variant="primary"
             label="Nuevo usuario"
             icon="pi pi-plus"
-            className="btn-dna-primary"
             onClick={openCreate}
           />
         }
@@ -298,17 +296,15 @@ export default function UsersPage() {
           className="space-y-4"
         >
           <FormField label="Nombre" error={errors.name?.message} htmlFor="user-name">
-            <InputText
+            <DnaInputText
               id="user-name"
-              className="w-full"
               autoComplete="off"
               {...register('name', { required: validationMessages.required })}
             />
           </FormField>
           <FormField label="Correo" error={errors.email?.message} htmlFor="user-email">
-            <InputText
+            <DnaInputText
               id="user-email"
-              className="w-full"
               type="email"
               autoComplete="off"
               {...register('email', {
@@ -333,10 +329,8 @@ export default function UsersPage() {
                   },
                 }}
                 render={({ field }) => (
-                  <Password
+                  <DnaPassword
                     inputId="user-password"
-                    className="w-full"
-                    inputClassName="w-full"
                     toggleMask
                     feedback={false}
                     autoComplete="new-password"
@@ -353,8 +347,7 @@ export default function UsersPage() {
               control={control}
               rules={{ required: validationMessages.required }}
               render={({ field }) => (
-                <Dropdown
-                  className="w-full"
+                <DnaDropdown
                   options={roleOptions}
                   value={field.value}
                   onChange={(e) => field.onChange(e.value)}
@@ -369,8 +362,7 @@ export default function UsersPage() {
                 control={control}
                 rules={{ required: validationMessages.required }}
                 render={({ field }) => (
-                  <Dropdown
-                    className="w-full"
+                  <DnaDropdown
                     options={activeHeadquarters.map((hq) => ({
                       label: `${hq.name} (${hq.city})`,
                       value: hq.id,
@@ -384,14 +376,13 @@ export default function UsersPage() {
             </FormField>
           )}
           <div className="flex justify-end gap-2 pt-2">
-            <Button
+            <DnaButton
               type="button"
+              variant="secondary"
               label="Cancelar"
-              severity="secondary"
-              outlined
               onClick={() => setDialogVisible(false)}
             />
-            <Button type="submit" label="Guardar" className="btn-dna-primary" loading={isSubmitting} />
+            <DnaButton type="submit" variant="primary" label="Guardar" loading={isSubmitting} />
           </div>
         </form>
       </Dialog>

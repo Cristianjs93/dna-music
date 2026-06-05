@@ -2,16 +2,19 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { FilterMatchMode } from 'primereact/api';
 import { Button } from 'primereact/button';
-import { Calendar } from 'primereact/calendar';
 import { Column } from 'primereact/column';
 import { ConfirmDialog } from 'primereact/confirmdialog';
 import { DataTable, type DataTableFilterMeta } from 'primereact/datatable';
 import { Dialog } from 'primereact/dialog';
-import { Dropdown } from 'primereact/dropdown';
-import { InputText } from 'primereact/inputtext';
 import { Tag } from 'primereact/tag';
 import { Toast } from 'primereact/toast';
 import { FormField } from '@/components/common/FormField';
+import {
+  DnaButton,
+  DnaCalendar,
+  DnaDropdown,
+  DnaInputText,
+} from '@/components/ui';
 import { PageHeader } from '@/components/common/PageHeader';
 import { TableSearchInput } from '@/components/common/TableSearchInput';
 import { useAppSelector } from '@/hooks/useAppSelector';
@@ -304,10 +307,10 @@ export default function StudentsPage() {
             : `Estudiantes de tu sede: ${currentUser?.headquarter?.name ?? ''}`
         }
         action={
-          <Button
+          <DnaButton
+            variant="primary"
             label="Nuevo estudiante"
             icon="pi pi-plus"
-            className="btn-dna-primary"
             onClick={openCreate}
           />
         }
@@ -382,9 +385,8 @@ export default function StudentsPage() {
             htmlFor="student-fullname"
             className="md:col-span-2"
           >
-            <InputText
+            <DnaInputText
               id="student-fullname"
-              className="w-full"
               autoComplete="off"
               {...register('fullName', { required: validationMessages.required })}
             />
@@ -395,9 +397,8 @@ export default function StudentsPage() {
             htmlFor="student-email"
             className="md:col-span-2"
           >
-            <InputText
+            <DnaInputText
               id="student-email"
-              className="w-full"
               type="email"
               autoComplete="off"
               {...register('email', {
@@ -410,25 +411,22 @@ export default function StudentsPage() {
             />
           </FormField>
           <FormField label="Teléfono" error={errors.phone?.message} htmlFor="student-phone">
-            <InputText
+            <DnaInputText
               id="student-phone"
-              className="w-full"
               autoComplete="off"
               {...register('phone', { required: validationMessages.required })}
             />
           </FormField>
           <FormField label="Documento" error={errors.identityCard?.message} htmlFor="student-id">
-            <InputText
+            <DnaInputText
               id="student-id"
-              className="w-full"
               autoComplete="off"
               {...register('identityCard', { required: validationMessages.required })}
             />
           </FormField>
           <FormField label="Programa" error={errors.program?.message} htmlFor="student-program">
-            <InputText
+            <DnaInputText
               id="student-program"
-              className="w-full"
               autoComplete="off"
               {...register('program', { required: validationMessages.required })}
             />
@@ -439,8 +437,7 @@ export default function StudentsPage() {
               control={control}
               rules={{ required: validationMessages.required }}
               render={({ field }) => (
-                <Dropdown
-                  className="w-full"
+                <DnaDropdown
                   options={hqOptions}
                   value={field.value}
                   onChange={(e) => field.onChange(e.value)}
@@ -455,8 +452,7 @@ export default function StudentsPage() {
               name="status"
               control={control}
               render={({ field }) => (
-                <Dropdown
-                  className="w-full"
+                <DnaDropdown
                   options={statusOptions}
                   value={field.value}
                   onChange={(e) => field.onChange(e.value)}
@@ -469,8 +465,7 @@ export default function StudentsPage() {
               name="enrollmentDate"
               control={control}
               render={({ field }) => (
-                <Calendar
-                  className="w-full"
+                <DnaCalendar
                   value={field.value}
                   onChange={(e) => field.onChange(e.value ?? null)}
                   dateFormat="yy-mm-dd"
@@ -480,14 +475,13 @@ export default function StudentsPage() {
             />
           </FormField>
           <div className="flex justify-end gap-2 md:col-span-2">
-            <Button
+            <DnaButton
               type="button"
+              variant="secondary"
               label="Cancelar"
-              severity="secondary"
-              outlined
               onClick={() => setDialogVisible(false)}
             />
-            <Button type="submit" label="Guardar" className="btn-dna-primary" loading={isSubmitting} />
+            <DnaButton type="submit" variant="primary" label="Guardar" loading={isSubmitting} />
           </div>
         </form>
       </Dialog>

@@ -7,10 +7,10 @@ import { ConfirmDialog } from 'primereact/confirmdialog';
 import { DataTable, type DataTableFilterMeta } from 'primereact/datatable';
 import { Dialog } from 'primereact/dialog';
 import { InputSwitch } from 'primereact/inputswitch';
-import { InputText } from 'primereact/inputtext';
 import { Tag } from 'primereact/tag';
 import { Toast } from 'primereact/toast';
 import { FormField } from '@/components/common/FormField';
+import { DnaButton, DnaInputText } from '@/components/ui';
 import { PageHeader } from '@/components/common/PageHeader';
 import { TableSearchInput } from '@/components/common/TableSearchInput';
 import {
@@ -204,10 +204,10 @@ export default function HeadquartersPage() {
         title="Sedes"
         subtitle="Administración de sedes y ubicaciones."
         action={
-          <Button
+          <DnaButton
+            variant="primary"
             label="Nueva sede"
             icon="pi pi-plus"
-            className="btn-dna-primary"
             onClick={openCreate}
           />
         }
@@ -268,25 +268,22 @@ export default function HeadquartersPage() {
           className="space-y-4"
         >
           <FormField label="Nombre" error={errors.name?.message} htmlFor="hq-name">
-            <InputText
+            <DnaInputText
               id="hq-name"
-              className="w-full"
               autoComplete="off"
               {...register('name', { required: validationMessages.required })}
             />
           </FormField>
           <FormField label="Ciudad" error={errors.city?.message} htmlFor="hq-city">
-            <InputText
+            <DnaInputText
               id="hq-city"
-              className="w-full"
               autoComplete="off"
               {...register('city', { required: validationMessages.required })}
             />
           </FormField>
           <FormField label="Dirección" error={errors.address?.message} htmlFor="hq-address">
-            <InputText
+            <DnaInputText
               id="hq-address"
-              className="w-full"
               autoComplete="off"
               {...register('address', { required: validationMessages.required })}
             />
@@ -302,14 +299,13 @@ export default function HeadquartersPage() {
             <span className="text-sm text-dna-muted">Sede activa</span>
           </div>
           <div className="flex justify-end gap-2 pt-2">
-            <Button
+            <DnaButton
               type="button"
+              variant="secondary"
               label="Cancelar"
-              severity="secondary"
-              outlined
               onClick={() => setDialogVisible(false)}
             />
-            <Button type="submit" label="Guardar" className="btn-dna-primary" loading={isSubmitting} />
+            <DnaButton type="submit" variant="primary" label="Guardar" loading={isSubmitting} />
           </div>
         </form>
       </Dialog>

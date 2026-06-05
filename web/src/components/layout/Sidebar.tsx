@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom';
+import { DnaButton, DnaLogo } from '@/components/ui';
 import { useAppDispatch } from '@/hooks/useAppDispatch';
 import { useAppSelector } from '@/hooks/useAppSelector';
 import { logout } from '@/store/authSlice';
@@ -18,12 +19,8 @@ export function Sidebar() {
 
   return (
     <aside className="flex w-64 shrink-0 flex-col border-r border-dna-border bg-dna-surface">
-      <div className="border-b border-dna-border px-6 py-5">
-        <img
-          src="/logo-horizontal-negro.avif"
-          alt="DNA Music"
-          className="h-10 w-auto"
-        />
+      <div className="flex flex-col items-center border-b border-dna-border px-6 py-6 text-center">
+        <DnaLogo />
         <p className="mt-3 text-xs uppercase tracking-wider text-dna-muted">
           Panel interno
         </p>
@@ -58,14 +55,14 @@ export function Sidebar() {
           <p className="truncate text-xs text-dna-muted">{user?.email}</p>
           <p className="mt-1 text-xs text-dna-gold">{user?.role}</p>
         </div>
-        <button
+        <DnaButton
           type="button"
+          variant="ghost"
+          label="Cerrar sesión"
+          icon="pi pi-sign-out"
+          className="w-full"
           onClick={() => dispatch(logout())}
-          className="flex w-full items-center justify-center gap-2 rounded-lg border border-dna-border px-4 py-2 text-sm text-dna-muted transition-colors hover:border-dna-gold hover:text-dna-gold"
-        >
-          <i className="pi pi-sign-out" />
-          Cerrar sesión
-        </button>
+        />
       </div>
     </aside>
   );

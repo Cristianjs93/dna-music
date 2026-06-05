@@ -1,8 +1,8 @@
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { UsersService } from '#/users/users.service';
 import type { UserPublic } from '#/users/constants/user-public.select';
+import { userPublicSelect } from '#/users/constants/user-public.select';
 import { PrismaService } from '#/prisma/prisma.service';
 import { isDefined } from '#util/parse.utils';
 import { AUTH_ERRORS } from './constants/auth-errors.constants';
@@ -18,7 +18,6 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
-    private readonly usersService: UsersService,
   ) {}
 
   async login(loginDto: LoginDto): Promise<AuthResponseDto> {
@@ -26,7 +25,7 @@ export class AuthService {
 
     const user = await this.prisma.user.findFirst({
       where: { email: loginDto.email, deletedAt: null },
-      select: { id: true, email: true, password: true, role: true, headquarterId: true },
+      select: { ...userPublicSelect, password: true },
     });
 
     // Dummy password used for timing-attack mitigation
@@ -38,7 +37,18 @@ export class AuthService {
       throw new UnauthorizedException(AUTH_ERRORS.invalidCredentials);
     }
 
-    const publicUser = await this.usersService.findOne(user.id);
+    const publicUser: UserPublic = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      headquarterId: user.headquarterId,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+      deletedAt: user.deletedAt,
+      headquarter: user.headquarter,
+    };
+
     return this.buildAuthResponse(publicUser);
   }
 

@@ -20,11 +20,11 @@
 
 ## Backend
 
-- One module = one folder under `src/modules/`.
+- One module = one folder under `src/` (e.g., `src/auth/`, `src/users/`).
 - Controllers: handle HTTP only; delegate logic to services.
 - Services: business logic, transactions, and orchestration.
-- Repositories: the single access point to Prisma per entity.
-- DTOs: Zod schemas + inferred types (`z.infer<typeof schema>`).
+- Prisma access: inject `PrismaService` from the global `PrismaModule`.
+- DTOs: `class-validator` decorators + dedicated `*-response.dto.ts` for API output.
 
 ## Frontend
 

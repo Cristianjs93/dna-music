@@ -37,4 +37,4 @@ async function bootstrap() {
   console.log(`Server is running on ${url}`);
   console.log(`Swagger docs: ${url}/api/docs`);
 }
-bootstrap();
+void bootstrap();

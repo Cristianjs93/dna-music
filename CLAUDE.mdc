@@ -2,42 +2,61 @@
 
 Welcome to the DNA Music ERP Mini-App repository. This project is a monorepo split into a NestJS backend and a React frontend.
 
-## 📁 Repository Structure & Context Maps
+## Repository Structure & Context Maps
 
-- `api/` -> Backend service (NestJS + TypeScript + Prisma + PostgreSQL)
-- `web/` -> Frontend application (React + TypeScript)
-- `.cursor/rules/` -> Granular AI prompt instructions and constraints
+- `api/` → Backend service (NestJS + TypeScript + Prisma + PostgreSQL)
+- `web/` → Frontend application (React + TypeScript)
+- `.cursor/rules/` → Granular AI prompt instructions and constraints
 
-## 🛠️ Global Orchestration Scripts
+## Current Backend State
 
-To manage development execution blocks, you can read commands directly via the execution guidelines under `.cursor/commands/`:
+| Area                                       | Status  |
+| ------------------------------------------ | ------- |
+| Prisma schema (User, Headquarter, Student) | Done    |
+| Users CRUD (`/api/users`)                  | Done    |
+| Auth: login + JWT guard (`/api/auth`)      | Done    |
+| Role-based guards (`@Roles`, `RolesGuard`) | Planned |
+| Headquarters, Students, Stats modules      | Planned |
+| React frontend                             | Planned |
 
-- **Run Backend**: Reference `.cursor/commands/dev-api`
-- **Run Frontend**: Reference `.cursor/commands/dev-web`
-- **Run Tests**: Reference `.cursor/commands/test`
-- **Run Documentation Suite**: Reference `.cursor/commands/swagger`
-- **Database Seed**: Reference `.cursor/commands/db-seed`
+### Auth decisions
 
-## 🤖 AI Alignment & Modular Rules
+- **Login** — `POST /api/auth/login` (public). Returns JWT + user profile.
+- **No public register** — users are provisioned by ADMIN via `POST /api/users`.
+- **Global guard** — `JwtAuthGuard` protects all routes unless marked `@Public()`.
+- **Security** — generic login errors, bcrypt (12 rounds), dummy hash on unknown email.
 
-Please read and closely adhere to our distinct rule manuals situated under `.cursor/rules/` before writing code modifications:
+## Global Orchestration Scripts
 
-- **Git & Conventional Commits**: `.cursor/rules/commit.md`
-- **Absolute Core Security**: `.cursor/rules/security.md` [cite: 29]
-- **Backend Architecture & Database**: `.cursor/rules/api.md`
-- **Frontend State & Roles Logic**: `.cursor/rules/web.md`
-- **Unit Testing Guidelines**: `.cursor/rules/testing.md`
-- **Static Analysis & Formatting (Linter)**: `.cursor/rules/linter.md`
+Read execution guidelines under `.cursor/commands/`:
+
+- **Run Backend**: `.cursor/commands/dev-api.mdc`
+- **Run Frontend**: `.cursor/commands/dev-web.mdc`
+- **Run Tests**: `.cursor/commands/test.mdc`
+- **Swagger**: `.cursor/commands/swagger.mdc`
+- **Database Seed**: `.cursor/commands/db-seed.mdc`
+
+## AI Alignment & Modular Rules
+
+Read and adhere to `.cursor/rules/` before writing code:
+
+- **Git & Conventional Commits**: `.cursor/rules/commit.mdc`
+- **Security & Auth**: `.cursor/rules/security.mdc`
+- **Backend Architecture**: `.cursor/rules/api.mdc`
+- **Frontend State & Roles**: `.cursor/rules/web.mdc`
+- **Unit Testing**: `.cursor/rules/test.mdc`
+- **Linting & Formatting**: `.cursor/rules/linter.mdc`
+- **Code Style**: `.cursor/rules/code-style.mdc`
 
 ### During Development
 
-1. **Follow each app’s architecture**.
-2. **Keep TypeScript strict** and avoid `any`.
-3. **Run relevant tests** for the code you change.
-4. **Use shared utilities** (e.g. `isDefined` in web) where the project specifies.
+1. Follow each app's architecture and existing conventions.
+2. Keep TypeScript strict; avoid `any`.
+3. Run relevant tests for the code you change.
+4. Use shared utilities (`isDefined`, `domainException`, `rethrowPrismaKnownError`) where the project specifies.
 
 ### After Changes
 
-1. **Run quality checks** (lint, test, etc.).
-2. **Verify builds** where applicable.
-3. **Update docs/comments** if behavior or contracts change.
+1. Run quality checks (`npm run lint` in `api/` or `web/`).
+2. Verify builds where applicable (`npm run build`).
+3. Update README and `.cursor` rules if behavior or API contracts change.

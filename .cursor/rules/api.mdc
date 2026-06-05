@@ -10,22 +10,32 @@
 ## Logging
 
 - NestJS built-in `Logger` (`@nestjs/common`).
-- Services: `private readonly logger = new Logger(MyService.name)` — The name of the class acts like scope/context.
-- Niveles: `log`, `debug`, `warn`, `error`. Never log passwords, tokens or sensitive data.
+- Services: `private readonly logger = new Logger(MyService.name)` — the class name acts as scope/context.
+- Levels: `log`, `debug`, `warn`, `error`. Never log passwords, tokens, or sensitive data.
 
 ## Error handling utilities
 
-- **Prisma errors** (`#util/prisma-error.utils`): wrap write operations in `try/catch` and call `rethrowPrismaKnownError(error, MESSAGES)` in the catch block. Maps P2002/P2025/P2003 to HTTP exceptions.
+- **Prisma errors** (`#util/errors/prisma-error.utils`): wrap write operations in `try/catch` and call `rethrowPrismaKnownError(error, MESSAGES)` in the catch block. Maps P2002/P2025/P2003 to HTTP exceptions.
+- **Domain errors** (`#util/errors/domain-error.utils`): use `domainException(ERROR_DEF)` for deliberate business-rule failures.
 
 ## Architectural Pattern
 
-- **Modular Design**: Every feature must have its own isolated module directory (e.g., `auth/`, `headquarters/`, `students/`). Each module should cleanly encapsulate its respective Controller, Service, and Prisma Data Access.
+- **Modular Design**: Every feature must have its own isolated module directory (e.g., `auth/`, `users/`, `headquarters/`, `students/`). Each module should cleanly encapsulate its respective Controller, Service, and Prisma data access.
 - **Strict Typing**: Leverage TypeScript to its full capabilities. Avoid the `any` keyword entirely.
+
+## Authentication (`src/auth/`)
+
+- **Login only** — `POST /api/auth/login` is public (`@Public()`). Returns `{ accessToken, user }`.
+- **No public registration** — users are created by ADMIN via `POST /api/users`. Do not add a public register endpoint.
+- **Global JWT guard** — `JwtAuthGuard` is registered as `APP_GUARD`. Mark public routes with `@Public()`.
+- **Current user** — use `@CurrentUser()` to read the authenticated user on protected handlers.
+- **JWT payload** — `sub`, `email`, `role`, `headquarterId` (used later for OPERATOR scoping).
+- **Role guard (planned)** — `@Roles(Role.ADMIN)` + `RolesGuard` for admin-only routes such as user creation.
 
 ## Business Logic & Database (Prisma)
 
 1. **Data Aggregations**: For analytics (e.g., `GET /api/stats`), use Prisma aggregate queries (`_count`, `_groupBy`). Generating metrics by pulling all raw rows into Node.js/JavaScript memory is strictly forbidden.
-2. **Role-Based Access Control (RBAC)**: Protect routes using custom NestJS Guards (`AuthGuard` and `RolesGuard`).
+2. **Role-Based Access Control (RBAC)**: Protect routes using `JwtAuthGuard` and a custom `RolesGuard`.
    - `ADMIN` has unrestricted global visibility.
    - `OPERADOR` is strictly bound to data belonging to their assigned `headquarterId`. Ensure contextual multi-tenancy filters are applied dynamically in the services.
 3. **Data Lifecycle**: Implement Soft Delete mechanics where reasonable (retaining rows with a `deletedAt` timestamp instead of physically removing them from PostgreSQL).
@@ -36,6 +46,7 @@
 
 - Setup in `#util/swagger/swagger.setup.ts`, invoked from `main.ts`.
 - UI: `http://localhost:3000/api/docs` (with global prefix `api`).
+- Use `.addBearerAuth()` in the document builder; decorate protected controllers with `@ApiBearerAuth()`.
 - Decorate controllers: `@ApiTags`, `@ApiOperation`, `@ApiOkResponse`, `@ApiParam`, etc.
 - Decorate DTOs: `@ApiProperty` / `@ApiPropertyOptional` on every field.
 - Response schemas: dedicated `*-response.dto.ts` classes; never expose `password` in response DTOs.

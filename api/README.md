@@ -25,23 +25,24 @@ Swagger UI: `http://localhost:3000/api/docs`
 
 ## Environment variables
 
-| Variable       | Description                          | Example                                              |
-| -------------- | ------------------------------------ | ---------------------------------------------------- |
-| `PORT`         | HTTP port                            | `3000`                                               |
-| `DATABASE_URL` | PostgreSQL connection string         | `postgresql://postgres:postgres@localhost:5432/dna_music?schema=public` |
-| `JWT_SECRET`   | Secret for JWT signing (auth module) | `random-string-secret`                               |
+| Variable         | Description                          | Example                                              |
+| ---------------- | ------------------------------------ | ---------------------------------------------------- |
+| `PORT`           | HTTP port                            | `3000`                                               |
+| `DATABASE_URL`   | PostgreSQL connection string         | `postgresql://postgres:postgres@localhost:5432/dna_music?schema=public` |
+| `JWT_SECRET`     | Secret for JWT signing               | `change-me-in-production-use-long-random-string`     |
+| `JWT_EXPIRES_IN` | Token lifetime                       | `1h`                                                 |
 
 ## Database scripts
 
-| Command                  | Description                              |
-| ------------------------ | ---------------------------------------- |
-| `npm run db:generate`    | Generate Prisma client                   |
-| `npm run db:migrate`     | Run migrations (dev)                     |
-| `npm run db:migrate:deploy` | Apply migrations (production)         |
-| `npm run db:seed`        | Load sample data                         |
-| `npm run db:setup`       | Generate + migrate + seed in one step    |
-| `npm run db:reset`       | Reset database and re-run migrations     |
-| `npm run db:studio`      | Open Prisma Studio                       |
+| Command                     | Description                              |
+| --------------------------- | ---------------------------------------- |
+| `npm run db:generate`       | Generate Prisma client                   |
+| `npm run db:migrate`        | Run migrations (dev)                     |
+| `npm run db:migrate:deploy` | Apply migrations (production)            |
+| `npm run db:seed`           | Load sample data                         |
+| `npm run db:setup`          | Generate + migrate + seed in one step    |
+| `npm run db:reset`          | Reset database and re-run migrations     |
+| `npm run db:studio`         | Open Prisma Studio                       |
 
 ## Seed data
 
@@ -59,17 +60,30 @@ Running `npm run db:seed` creates:
 
 ## Available endpoints
 
+### Auth (`/api/auth`)
+
+| Method | Path             | Auth required | Description                         |
+| ------ | ---------------- | ------------- | ----------------------------------- |
+| `POST` | `/api/auth/login`  | No          | Login with email + password → JWT   |
+| `GET`  | `/api/auth/me`     | Yes         | Current authenticated user profile |
+
+There is **no public registration endpoint**. User accounts are provisioned by an ADMIN.
+
+All other routes require a valid `Authorization: Bearer <token>` header.
+
 ### Users (`/api/users`)
 
-| Method   | Path            | Description              |
-| -------- | --------------- | ------------------------ |
-| `POST`   | `/api/users`    | Create a user            |
-| `GET`    | `/api/users`    | List active users        |
-| `GET`    | `/api/users/:id`| Get user by ID           |
-| `PATCH`  | `/api/users/:id`| Update a user            |
-| `DELETE` | `/api/users/:id`| Soft-delete a user       |
+| Method   | Path             | Auth required | Description                              |
+| -------- | ---------------- | ------------- | ---------------------------------------- |
+| `POST`   | `/api/users`     | Yes (ADMIN*)  | Create a user (admin-only — guard planned) |
+| `GET`    | `/api/users`     | Yes           | List active users                        |
+| `GET`    | `/api/users/:id` | Yes           | Get user by ID                           |
+| `PATCH`  | `/api/users/:id` | Yes           | Update a user                            |
+| `DELETE` | `/api/users/:id` | Yes           | Soft-delete a user                       |
 
-More modules (auth, branches, students, stats) will be added as development continues. Check Swagger for the latest contract.
+\*Role guard not yet enforced; any authenticated user can hit these routes until `RolesGuard` is added.
+
+More modules (branches, students, stats) will be added as development continues. Check Swagger for the latest contract.
 
 ## Development commands
 
@@ -86,6 +100,7 @@ npm run test:e2e     # end-to-end tests
 
 ```text
 src/
+├── auth/             # Login, JWT strategy, guards, decorators
 ├── prisma/           # Prisma module (global DB access)
 ├── users/            # Users CRUD module
 ├── util/             # Shared helpers (errors, swagger, parsing)
@@ -101,7 +116,7 @@ prisma/
 
 - **User** — ADMIN or OPERATOR; operators are linked to one branch
 - **Headquarter** — branch / campus (Bogotá, Medellín, Cali)
-- **Student** — belongs to a branch; statuses include active, inactive, graduated, etc.
+- **Student** — belongs to a branch; statuses include ACTIVO, INACTIVO, RETIRADO
 
 Users, branches, and students support soft delete via `deletedAt`.
 
@@ -110,10 +125,11 @@ Users, branches, and students support soft delete via `deletedAt`.
 | Feature            | Status      |
 | ------------------ | ----------- |
 | Users CRUD         | Done        |
-| Swagger            | Done        |
-| JWT auth + guards  | Planned     |
+| JWT auth + guard   | Done        |
+| Role-based guards  | Planned     |
 | Branches CRUD      | Planned     |
 | Students CRUD      | Planned     |
 | `GET /api/stats`   | Planned     |
+| Swagger            | Done        |
 
 See the root [README](../README.md) for the full monorepo overview and deployment notes.

@@ -5,6 +5,8 @@
 - **TypeScript First**: Define solid Interfaces or Types for all API responses, User session objects, and Component Props.
 
 ## State & Auth Flow
-1. **Token Persistence**: Securely store the JWT token upon a successful login. 
-2. **HTTP Authorization Header**: Intercept all outgoing HTTP requests to protected routes and dynamically append the token using the `Authorization: Bearer <JWT_TOKEN>` standard.
-3. **Conditional Rendering**: Dynamically adapt views based on user roles (`ADMIN` vs. `OPERADOR`). Form inputs, location selectors, and navigation links should hide or disable gracefully based on permission states.
+
+1. **Login** — Call `POST /api/auth/login` with email and password. There is no public registration; admins create users via the API.
+2. **Token Persistence** — Store the JWT from the login response securely (e.g., memory or `localStorage`; document the trade-off in the README security section).
+3. **HTTP Authorization Header** — Attach `Authorization: Bearer <JWT_TOKEN>` on all protected requests.
+4. **Conditional Rendering** — Adapt views by role (`ADMIN` vs. `OPERADOR`). Hide or disable branch selectors, user-management actions, and admin-only navigation when the operator role lacks permission.

@@ -6,6 +6,8 @@ export function setupSwagger(app: INestApplication): void {
     .setTitle('DNA Music API')
     .setDescription('Mini ERP — Student management system by headquarter.')
     .setVersion('1.0')
+    .addBearerAuth()
+    .addTag('auth', 'Authentication')
     .addTag('users', 'User management')
     .build();
 

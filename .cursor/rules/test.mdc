@@ -7,6 +7,6 @@ Writing automated unit tests acts as a core metric for code resilience, safety, 
 1. **Co-location File Pattern**: Unit test files must live next to the file they are testing using the `.spec.ts` naming convention (e.g., `auth.service.spec.ts` next to `auth.service.ts`).
 2. **Isolation & Mocking**: Unit tests must isolate the target class. External calls, third-party libraries, and Prisma database connections must be cleanly mocked using NestJS `Test.createTestingModule` and Jest mocking utilities (`jest.fn()`).
 3. **Coverage Priorities**: Focus unit tests primarily on:
-   - [cite_start]**Auth & Guard Policies**: Validating JWT signing, role evaluations, and extraction logic[cite: 28, 38, 39].
-   - [cite_start]**Multi-Tenant Filtering**: Ensuring an `OPERADOR` cannot fetch students outside their authorized location[cite: 47].
-   - [cite_start]**Metrics Aggregations**: Asserting proper output structures for stats math queries[cite: 51, 52].
+   - **Auth & Guard Policies**: JWT signing, login failure messages, role evaluations, and guard extraction logic.
+   - **Multi-Tenant Filtering**: Ensuring an `OPERADOR` cannot fetch students outside their authorized branch.
+   - **Metrics Aggregations**: Asserting proper output structures for stats aggregate queries.

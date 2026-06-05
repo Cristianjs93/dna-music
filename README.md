@@ -8,7 +8,7 @@ The goal is to demonstrate sound backend judgment, security awareness, code orga
 
 DNA Music operates across multiple cities with different user profiles:
 
-- An **administrator** can view and manage everything.
+- An **administrator** can view and manage everything, including creating new users.
 - An **operator** only works with data from their assigned branch.
 
 This repository implements that logic step by step: a REST API, a PostgreSQL database, and (coming soon) a frontend to tie both layers together.
@@ -75,13 +75,20 @@ Loaded automatically by the seed script (`npm run db:seed`):
 
 The seed also creates **3 branches** (Bogotá, Medellín, Cali) and **6 sample students** in different statuses.
 
+## Authentication flow
+
+1. **Login** — `POST /api/auth/login` with email and password. Returns a JWT and the authenticated user profile. This is the only public auth endpoint.
+2. **Protected routes** — Send `Authorization: Bearer <token>` on all management endpoints.
+3. **User creation** — There is no public registration. New users are created by an **ADMIN** via `POST /api/users` (role-based guard planned).
+
 ## Current development status
 
 | Module              | Status       |
 | ------------------- | ------------ |
 | Users (CRUD API)    | Implemented  |
+| JWT authentication  | Implemented  |
 | Swagger / OpenAPI   | Implemented  |
-| JWT authentication  | Pending      |
+| Role-based guards   | Pending      |
 | Branches (CRUD API) | Pending      |
 | Students (API)      | Pending      |
 | Statistics          | Pending      |
@@ -101,7 +108,8 @@ Copy `api/.env.example` to `api/.env`. Main variables:
 
 - `PORT` — server port (default `3000`)
 - `DATABASE_URL` — PostgreSQL connection string
-- `JWT_SECRET` — secret for tokens (used by the auth module)
+- `JWT_SECRET` — secret for signing tokens
+- `JWT_EXPIRES_IN` — token lifetime (default `1h`)
 
 Do not commit `.env` files to the repository.
 
@@ -113,6 +121,7 @@ This project is built with AI tooling (Cursor, Claude). Agent configuration live
 
 - **Technical analysis** → `analisis_tecnico.md`
 - **Git and version control** → `git_respuestas.md`
+- **API details** → `api/README.md`
 
 ## Author
 

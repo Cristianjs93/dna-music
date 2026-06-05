@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { FilterMatchMode } from 'primereact/api';
 import { Button } from 'primereact/button';
@@ -8,34 +8,14 @@ import { DataTable, type DataTableFilterMeta } from 'primereact/datatable';
 import { Dialog } from 'primereact/dialog';
 import { Toast } from 'primereact/toast';
 import { FormField } from '@/components/common/FormField';
-import { DnaButton, DnaDropdown, DnaInputText, DnaPassword } from '@/components/ui';
 import { PageHeader } from '@/components/common/PageHeader';
 import { TableSearchInput } from '@/components/common/TableSearchInput';
-import { listHeadquarters } from '@/services/headquarters.service';
-import {
-  createUser,
-  deleteUser,
-  listUsers,
-  updateUser,
-} from '@/services/users.service';
-import type {
-  CreateUserPayload,
-  Headquarter,
-  Role,
-  UpdateUserPayload,
-  User,
-} from '@/types/api.types';
+import { DnaButton, DnaDropdown, DnaInputText, DnaPassword } from '@/components/ui';
+import { useUsers, type UserFormValues } from '@/hooks/useUsers';
+import type { Role, User } from '@/types/api.types';
 import { confirmDelete } from '@/utils/confirmDelete';
 import { validationMessages } from '@/utils/errorMessages';
-import { formatDate, getErrorMessage } from '@/utils/format';
-
-interface UserFormValues {
-  name: string;
-  email: string;
-  password: string;
-  role: Role;
-  headquarterId: string | null;
-}
+import { formatDate } from '@/utils/format';
 
 const roleOptions = [
   { label: 'Administrador', value: 'ADMIN' as Role },
@@ -50,10 +30,16 @@ const emptyFilters: DataTableFilterMeta = {
 };
 
 export default function UsersPage() {
-  const toast = useRef<Toast>(null);
-  const [users, setUsers] = useState<User[]>([]);
-  const [headquarters, setHeadquarters] = useState<Headquarter[]>([]);
-  const [loading, setLoading] = useState(true);
+  const {
+    users,
+    activeHeadquarters,
+    loading,
+    saving,
+    saveUser,
+    removeUser,
+    toastRef,
+  } = useUsers();
+
   const [dialogVisible, setDialogVisible] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [filters, setFilters] = useState<DataTableFilterMeta>(emptyFilters);
@@ -65,7 +51,7 @@ export default function UsersPage() {
     handleSubmit,
     reset,
     watch,
-    formState: { isSubmitting, errors },
+    formState: { errors },
   } = useForm<UserFormValues>({
     defaultValues: {
       name: '',
@@ -77,31 +63,6 @@ export default function UsersPage() {
   });
 
   const selectedRole = watch('role');
-  const activeHeadquarters = headquarters.filter((hq) => hq.isActive);
-
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [usersData, hqData] = await Promise.all([
-        listUsers(),
-        listHeadquarters(),
-      ]);
-      setUsers(usersData);
-      setHeadquarters(hqData);
-    } catch (err) {
-      toast.current?.show({
-        severity: 'error',
-        summary: 'Error',
-        detail: getErrorMessage(err, 'No fue posible cargar usuarios.'),
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void loadData();
-  }, [loadData]);
 
   const openCreate = () => {
     setEditingUser(null);
@@ -128,69 +89,15 @@ export default function UsersPage() {
   };
 
   const onSubmit = async (values: UserFormValues) => {
-    try {
-      if (editingUser) {
-        const payload: UpdateUserPayload = {
-          name: values.name,
-          email: values.email,
-          role: values.role,
-          headquarterId:
-            values.role === 'OPERADOR' ? values.headquarterId ?? undefined : null,
-        };
-        await updateUser(editingUser.id, payload);
-        toast.current?.show({
-          severity: 'success',
-          summary: 'Actualizado',
-          detail: 'Usuario actualizado correctamente.',
-        });
-      } else {
-        const payload: CreateUserPayload = {
-          name: values.name,
-          email: values.email,
-          password: values.password,
-          role: values.role,
-          headquarterId:
-            values.role === 'OPERADOR'
-              ? values.headquarterId ?? undefined
-              : undefined,
-        };
-        await createUser(payload);
-        toast.current?.show({
-          severity: 'success',
-          summary: 'Creado',
-          detail: 'Usuario creado correctamente.',
-        });
-      }
-      setDialogVisible(false);
-      await loadData();
-    } catch (err) {
-      toast.current?.show({
-        severity: 'error',
-        summary: 'Error',
-        detail: getErrorMessage(err, 'No fue posible guardar el usuario.'),
-      });
-    }
+    const success = await saveUser(editingUser, values);
+    if (success) setDialogVisible(false);
   };
 
   const handleDelete = (user: User) => {
     confirmDelete({
       entityLabel: `al usuario ${user.name}`,
       onAccept: async () => {
-        try {
-          await deleteUser(user.id);
-          toast.current?.show({
-            severity: 'success',
-            summary: 'Eliminado',
-            detail: 'Usuario eliminado correctamente.',
-          });
-          await loadData();
-        } catch (err) {
-          toast.current?.show({
-            severity: 'error',
-            summary: 'Error',
-            detail: getErrorMessage(err, 'No fue posible eliminar el usuario.'),
-          });
-        }
+        await removeUser(user);
       },
     });
   };
@@ -227,7 +134,7 @@ export default function UsersPage() {
 
   return (
     <div>
-      <Toast ref={toast} />
+      <Toast ref={toastRef} />
       <ConfirmDialog />
       <PageHeader
         title="Usuarios"
@@ -382,7 +289,7 @@ export default function UsersPage() {
               label="Cancelar"
               onClick={() => setDialogVisible(false)}
             />
-            <DnaButton type="submit" variant="primary" label="Guardar" loading={isSubmitting} />
+            <DnaButton type="submit" variant="primary" label="Guardar" loading={saving} />
           </div>
         </form>
       </Dialog>

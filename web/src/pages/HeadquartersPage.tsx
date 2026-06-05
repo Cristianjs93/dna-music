@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { FilterMatchMode } from 'primereact/api';
 import { Button } from 'primereact/button';
@@ -10,27 +10,17 @@ import { InputSwitch } from 'primereact/inputswitch';
 import { Tag } from 'primereact/tag';
 import { Toast } from 'primereact/toast';
 import { FormField } from '@/components/common/FormField';
-import { DnaButton, DnaInputText } from '@/components/ui';
 import { PageHeader } from '@/components/common/PageHeader';
 import { TableSearchInput } from '@/components/common/TableSearchInput';
+import { DnaButton, DnaInputText } from '@/components/ui';
 import {
-  createHeadquarter,
-  deleteHeadquarter,
-  listHeadquarters,
-  setHeadquarterStatus,
-  updateHeadquarter,
-} from '@/services/headquarters.service';
+  useHeadquarters,
+  type HeadquarterFormValues,
+} from '@/hooks/useHeadquarters';
 import type { Headquarter } from '@/types/api.types';
 import { confirmDelete } from '@/utils/confirmDelete';
 import { validationMessages } from '@/utils/errorMessages';
-import { formatDate, getErrorMessage } from '@/utils/format';
-
-interface HeadquarterFormValues {
-  name: string;
-  city: string;
-  address: string;
-  isActive: boolean;
-}
+import { formatDate } from '@/utils/format';
 
 const emptyFilters: DataTableFilterMeta = {
   global: { value: null, matchMode: FilterMatchMode.CONTAINS },
@@ -39,9 +29,15 @@ const emptyFilters: DataTableFilterMeta = {
 };
 
 export default function HeadquartersPage() {
-  const toast = useRef<Toast>(null);
-  const [headquarters, setHeadquarters] = useState<Headquarter[]>([]);
-  const [loading, setLoading] = useState(true);
+  const {
+    headquarters,
+    loading,
+    saving,
+    saveHeadquarter,
+    removeHeadquarter,
+    toastRef,
+  } = useHeadquarters();
+
   const [dialogVisible, setDialogVisible] = useState(false);
   const [editing, setEditing] = useState<Headquarter | null>(null);
   const [filters, setFilters] = useState<DataTableFilterMeta>(emptyFilters);
@@ -52,35 +48,10 @@ export default function HeadquartersPage() {
     handleSubmit,
     reset,
     control,
-    formState: { isSubmitting, errors },
+    formState: { errors },
   } = useForm<HeadquarterFormValues>({
-    defaultValues: {
-      name: '',
-      city: '',
-      address: '',
-      isActive: true,
-    },
+    defaultValues: { name: '', city: '', address: '', isActive: true },
   });
-
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const data = await listHeadquarters();
-      setHeadquarters(data);
-    } catch (err) {
-      toast.current?.show({
-        severity: 'error',
-        summary: 'Error',
-        detail: getErrorMessage(err, 'No fue posible cargar sedes.'),
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void loadData();
-  }, [loadData]);
 
   const openCreate = () => {
     setEditing(null);
@@ -100,59 +71,15 @@ export default function HeadquartersPage() {
   };
 
   const onSubmit = async (values: HeadquarterFormValues) => {
-    try {
-      if (editing) {
-        await updateHeadquarter(editing.id, {
-          name: values.name,
-          city: values.city,
-          address: values.address,
-        });
-        if (editing.isActive !== values.isActive) {
-          await setHeadquarterStatus(editing.id, values.isActive);
-        }
-        toast.current?.show({
-          severity: 'success',
-          summary: 'Actualizado',
-          detail: 'Sede actualizada correctamente.',
-        });
-      } else {
-        await createHeadquarter(values);
-        toast.current?.show({
-          severity: 'success',
-          summary: 'Creado',
-          detail: 'Sede creada correctamente.',
-        });
-      }
-      setDialogVisible(false);
-      await loadData();
-    } catch (err) {
-      toast.current?.show({
-        severity: 'error',
-        summary: 'Error',
-        detail: getErrorMessage(err, 'No fue posible guardar la sede.'),
-      });
-    }
+    const success = await saveHeadquarter(editing, values);
+    if (success) setDialogVisible(false);
   };
 
   const handleDelete = (hq: Headquarter) => {
     confirmDelete({
       entityLabel: `la sede ${hq.name}`,
       onAccept: async () => {
-        try {
-          await deleteHeadquarter(hq.id);
-          toast.current?.show({
-            severity: 'success',
-            summary: 'Eliminado',
-            detail: 'Sede eliminada correctamente.',
-          });
-          await loadData();
-        } catch (err) {
-          toast.current?.show({
-            severity: 'error',
-            summary: 'Error',
-            detail: getErrorMessage(err, 'No fue posible eliminar la sede.'),
-          });
-        }
+        await removeHeadquarter(hq);
       },
     });
   };
@@ -198,7 +125,7 @@ export default function HeadquartersPage() {
 
   return (
     <div>
-      <Toast ref={toast} />
+      <Toast ref={toastRef} />
       <ConfirmDialog />
       <PageHeader
         title="Sedes"
@@ -305,7 +232,7 @@ export default function HeadquartersPage() {
               label="Cancelar"
               onClick={() => setDialogVisible(false)}
             />
-            <DnaButton type="submit" variant="primary" label="Guardar" loading={isSubmitting} />
+            <DnaButton type="submit" variant="primary" label="Guardar" loading={saving} />
           </div>
         </form>
       </Dialog>

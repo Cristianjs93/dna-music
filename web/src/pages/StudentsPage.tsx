@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { FilterMatchMode } from 'primereact/api';
 import { Button } from 'primereact/button';
@@ -9,42 +9,19 @@ import { Dialog } from 'primereact/dialog';
 import { Tag } from 'primereact/tag';
 import { Toast } from 'primereact/toast';
 import { FormField } from '@/components/common/FormField';
+import { PageHeader } from '@/components/common/PageHeader';
+import { TableSearchInput } from '@/components/common/TableSearchInput';
 import {
   DnaButton,
   DnaCalendar,
   DnaDropdown,
   DnaInputText,
 } from '@/components/ui';
-import { PageHeader } from '@/components/common/PageHeader';
-import { TableSearchInput } from '@/components/common/TableSearchInput';
-import { useAppSelector } from '@/hooks/useAppSelector';
-import { listHeadquarters } from '@/services/headquarters.service';
-import {
-  createStudent,
-  deleteStudent,
-  listStudents,
-  setStudentStatus,
-  updateStudent,
-} from '@/services/students.service';
-import type {
-  Headquarter,
-  Student,
-  StudentStatus,
-} from '@/types/api.types';
+import { useStudents, type StudentFormValues } from '@/hooks/useStudents';
+import type { Student, StudentStatus } from '@/types/api.types';
 import { confirmDelete } from '@/utils/confirmDelete';
 import { validationMessages } from '@/utils/errorMessages';
-import { formatDate, getErrorMessage } from '@/utils/format';
-
-interface StudentFormValues {
-  fullName: string;
-  email: string;
-  phone: string;
-  identityCard: string;
-  headquarterId: string;
-  program: string;
-  status: StudentStatus;
-  enrollmentDate: Date | null;
-}
+import { formatDate } from '@/utils/format';
 
 const statusOptions = [
   { label: 'Activo', value: 'ACTIVO' as StudentStatus },
@@ -66,12 +43,19 @@ const emptyFilters: DataTableFilterMeta = {
 };
 
 export default function StudentsPage() {
-  const toast = useRef<Toast>(null);
-  const currentUser = useAppSelector((state) => state.auth.user);
-  const isAdmin = currentUser?.role === 'ADMIN';
-  const [students, setStudents] = useState<Student[]>([]);
-  const [headquarters, setHeadquarters] = useState<Headquarter[]>([]);
-  const [loading, setLoading] = useState(true);
+  const {
+    students,
+    loading,
+    saving,
+    isAdmin,
+    currentUser,
+    defaultHeadquarterId,
+    headquarterOptions,
+    saveStudent,
+    removeStudent,
+    toastRef,
+  } = useStudents();
+
   const [dialogVisible, setDialogVisible] = useState(false);
   const [editing, setEditing] = useState<Student | null>(null);
   const [filters, setFilters] = useState<DataTableFilterMeta>(emptyFilters);
@@ -82,7 +66,7 @@ export default function StudentsPage() {
     handleSubmit,
     reset,
     control,
-    formState: { isSubmitting, errors },
+    formState: { errors },
   } = useForm<StudentFormValues>({
     defaultValues: {
       fullName: '',
@@ -95,36 +79,6 @@ export default function StudentsPage() {
       enrollmentDate: new Date(),
     },
   });
-
-  const activeHeadquarters = headquarters.filter((hq) => hq.isActive);
-
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [studentsData, hqData] = await Promise.all([
-        listStudents(),
-        isAdmin ? listHeadquarters() : Promise.resolve([]),
-      ]);
-      setStudents(studentsData);
-      setHeadquarters(hqData);
-    } catch (err) {
-      toast.current?.show({
-        severity: 'error',
-        summary: 'Error',
-        detail: getErrorMessage(err, 'No fue posible cargar estudiantes.'),
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [isAdmin]);
-
-  useEffect(() => {
-    void loadData();
-  }, [loadData]);
-
-  const defaultHeadquarterId = isAdmin
-    ? activeHeadquarters[0]?.id ?? ''
-    : currentUser?.headquarterId ?? '';
 
   const openCreate = () => {
     setEditing(null);
@@ -159,80 +113,15 @@ export default function StudentsPage() {
   };
 
   const onSubmit = async (values: StudentFormValues) => {
-    const enrollmentDate = values.enrollmentDate
-      ? values.enrollmentDate.toISOString().split('T')[0]
-      : undefined;
-
-    try {
-      if (editing) {
-        await updateStudent(editing.id, {
-          fullName: values.fullName,
-          email: values.email,
-          phone: values.phone,
-          identityCard: values.identityCard,
-          program: values.program,
-          enrollmentDate,
-          headquarterId: isAdmin ? values.headquarterId : undefined,
-        });
-        if (editing.status !== values.status) {
-          if (values.status === 'ACTIVO') {
-            await setStudentStatus(editing.id, true);
-          } else if (values.status === 'INACTIVO') {
-            await setStudentStatus(editing.id, false);
-          }
-        }
-        toast.current?.show({
-          severity: 'success',
-          summary: 'Actualizado',
-          detail: 'Estudiante actualizado correctamente.',
-        });
-      } else {
-        await createStudent({
-          fullName: values.fullName,
-          email: values.email,
-          phone: values.phone,
-          identityCard: values.identityCard,
-          headquarterId: values.headquarterId,
-          program: values.program,
-          status: values.status,
-          enrollmentDate,
-        });
-        toast.current?.show({
-          severity: 'success',
-          summary: 'Creado',
-          detail: 'Estudiante creado correctamente.',
-        });
-      }
-      setDialogVisible(false);
-      await loadData();
-    } catch (err) {
-      toast.current?.show({
-        severity: 'error',
-        summary: 'Error',
-        detail: getErrorMessage(err, 'No fue posible guardar el estudiante.'),
-      });
-    }
+    const success = await saveStudent(editing, values);
+    if (success) setDialogVisible(false);
   };
 
   const handleDelete = (student: Student) => {
     confirmDelete({
       entityLabel: `al estudiante ${student.fullName}`,
       onAccept: async () => {
-        try {
-          await deleteStudent(student.id);
-          toast.current?.show({
-            severity: 'success',
-            summary: 'Eliminado',
-            detail: 'Estudiante retirado correctamente.',
-          });
-          await loadData();
-        } catch (err) {
-          toast.current?.show({
-            severity: 'error',
-            summary: 'Error',
-            detail: getErrorMessage(err, 'No fue posible eliminar el estudiante.'),
-          });
-        }
+        await removeStudent(student);
       },
     });
   };
@@ -279,25 +168,11 @@ export default function StudentsPage() {
     </div>
   );
 
-  const hqOptions = isAdmin
-    ? activeHeadquarters.map((hq) => ({
-        label: `${hq.name} (${hq.city})`,
-        value: hq.id,
-      }))
-    : currentUser?.headquarter
-      ? [
-          {
-            label: `${currentUser.headquarter.name} (${currentUser.headquarter.city})`,
-            value: currentUser.headquarter.id,
-          },
-        ]
-      : [];
-
   const formKey = editing?.id ?? 'create';
 
   return (
     <div>
-      <Toast ref={toast} />
+      <Toast ref={toastRef} />
       <ConfirmDialog />
       <PageHeader
         title="Estudiantes"
@@ -438,7 +313,7 @@ export default function StudentsPage() {
               rules={{ required: validationMessages.required }}
               render={({ field }) => (
                 <DnaDropdown
-                  options={hqOptions}
+                  options={headquarterOptions}
                   value={field.value}
                   onChange={(e) => field.onChange(e.value)}
                   disabled={!isAdmin}
@@ -481,7 +356,7 @@ export default function StudentsPage() {
               label="Cancelar"
               onClick={() => setDialogVisible(false)}
             />
-            <DnaButton type="submit" variant="primary" label="Guardar" loading={isSubmitting} />
+            <DnaButton type="submit" variant="primary" label="Guardar" loading={saving} />
           </div>
         </form>
       </Dialog>

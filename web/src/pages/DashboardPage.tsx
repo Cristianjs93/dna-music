@@ -1,37 +1,15 @@
-import { useEffect, useState } from 'react';
 import { Card } from 'primereact/card';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import { PageHeader } from '@/components/common/PageHeader';
-import { getStats } from '@/services/stats.service';
-import type { StatsResponse } from '@/types/api.types';
 import { useAppSelector } from '@/hooks/useAppSelector';
-import { getErrorMessage } from '@/utils/format';
+import { useStats } from '@/hooks/useStats';
 
 export default function DashboardPage() {
   const user = useAppSelector((state) => state.auth.user);
   const isAdmin = user?.role === 'ADMIN';
-  const [stats, setStats] = useState<StatsResponse | null>(null);
-  const [loading, setLoading] = useState(isAdmin);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!isAdmin) return;
-
-    const load = async () => {
-      try {
-        const data = await getStats();
-        setStats(data);
-      } catch (err) {
-        setError(getErrorMessage(err, 'No fue posible cargar las estadísticas.'));
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void load();
-  }, [isAdmin]);
+  const { stats, loading, error, totalStudents } = useStats(isAdmin);
 
   if (!isAdmin) {
     return (
@@ -70,9 +48,6 @@ export default function DashboardPage() {
       </div>
     );
   }
-
-  const totalStudents =
-    stats?.studentsPerHeadquarter.reduce((sum, item) => sum + item.count, 0) ?? 0;
 
   return (
     <div>

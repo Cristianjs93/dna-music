@@ -1,51 +1,20 @@
-import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
 import { Message } from 'primereact/message';
-import { DnaButton, DnaInputText, DnaLogo, DnaPassword } from '@/components/ui';
-import { useAppDispatch } from '@/hooks/useAppDispatch';
-import { login } from '@/services/auth.service';
-import { setCredentials } from '@/store/authSlice';
 import { FormField } from '@/components/common/FormField';
+import { DnaButton, DnaInputText, DnaLogo, DnaPassword } from '@/components/ui';
+import { useLogin, type LoginFormValues } from '@/hooks/useLogin';
 import { validationMessages } from '@/utils/errorMessages';
-import { getErrorMessage } from '@/utils/format';
-
-interface LoginFormValues {
-  email: string;
-  password: string;
-}
 
 export default function LoginPage() {
-  const dispatch = useAppDispatch();
-  const navigate = useNavigate();
-  const [error, setError] = useState<string | null>(null);
+  const { loginUser, error, loading } = useLogin();
   const {
     register,
     control,
     handleSubmit,
-    formState: { isSubmitting, errors },
+    formState: { errors },
   } = useForm<LoginFormValues>({
-    defaultValues: {
-      email: '',
-      password: '',
-    },
+    defaultValues: { email: '', password: '' },
   });
-
-  const onSubmit = async (values: LoginFormValues) => {
-    setError(null);
-    try {
-      const response = await login(values);
-      dispatch(
-        setCredentials({
-          user: response.user,
-          accessToken: response.accessToken,
-        }),
-      );
-      navigate('/', { replace: true });
-    } catch (err) {
-      setError(getErrorMessage(err, 'No fue posible iniciar sesión.'));
-    }
-  };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-dna-bg px-4">
@@ -62,7 +31,7 @@ export default function LoginPage() {
 
         {error && <Message severity="error" text={error} className="mb-4 w-full" />}
 
-        <form autoComplete="on" onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+        <form autoComplete="on" onSubmit={handleSubmit(loginUser)} className="space-y-5">
           <FormField label="Correo" error={errors.email?.message} htmlFor="login-email">
             <DnaInputText
               id="login-email"
@@ -99,10 +68,10 @@ export default function LoginPage() {
           <DnaButton
             type="submit"
             variant="primary"
-            label={isSubmitting ? 'Ingresando...' : 'Ingresar'}
+            label={loading ? 'Ingresando...' : 'Ingresar'}
             icon="pi pi-arrow-right"
             iconPos="right"
-            loading={isSubmitting}
+            loading={loading}
             className="dna-btn-login mt-4 w-full"
           />
         </form>

@@ -4,14 +4,16 @@ import { FilterMatchMode } from 'primereact/api';
 import { Button } from 'primereact/button';
 import { Calendar } from 'primereact/calendar';
 import { Column } from 'primereact/column';
-import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
+import { ConfirmDialog } from 'primereact/confirmdialog';
 import { DataTable, type DataTableFilterMeta } from 'primereact/datatable';
 import { Dialog } from 'primereact/dialog';
 import { Dropdown } from 'primereact/dropdown';
 import { InputText } from 'primereact/inputtext';
 import { Tag } from 'primereact/tag';
 import { Toast } from 'primereact/toast';
+import { FormField } from '@/components/common/FormField';
 import { PageHeader } from '@/components/common/PageHeader';
+import { TableSearchInput } from '@/components/common/TableSearchInput';
 import { useAppSelector } from '@/hooks/useAppSelector';
 import { listHeadquarters } from '@/services/headquarters.service';
 import {
@@ -26,6 +28,8 @@ import type {
   Student,
   StudentStatus,
 } from '@/types/api.types';
+import { confirmDelete } from '@/utils/confirmDelete';
+import { validationMessages } from '@/utils/errorMessages';
 import { formatDate, getErrorMessage } from '@/utils/format';
 
 interface StudentFormValues {
@@ -44,6 +48,12 @@ const statusOptions = [
   { label: 'Inactivo', value: 'INACTIVO' as StudentStatus },
   { label: 'Retirado', value: 'RETIRADO' as StudentStatus },
 ];
+
+const statusLabels: Record<StudentStatus, string> = {
+  ACTIVO: 'Activo',
+  INACTIVO: 'Inactivo',
+  RETIRADO: 'Retirado',
+};
 
 const emptyFilters: DataTableFilterMeta = {
   global: { value: null, matchMode: FilterMatchMode.CONTAINS },
@@ -69,7 +79,7 @@ export default function StudentsPage() {
     handleSubmit,
     reset,
     control,
-    formState: { isSubmitting },
+    formState: { isSubmitting, errors },
   } = useForm<StudentFormValues>({
     defaultValues: {
       fullName: '',
@@ -82,6 +92,8 @@ export default function StudentsPage() {
       enrollmentDate: new Date(),
     },
   });
+
+  const activeHeadquarters = headquarters.filter((hq) => hq.isActive);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -108,7 +120,7 @@ export default function StudentsPage() {
   }, [loadData]);
 
   const defaultHeadquarterId = isAdmin
-    ? headquarters[0]?.id ?? ''
+    ? activeHeadquarters[0]?.id ?? ''
     : currentUser?.headquarterId ?? '';
 
   const openCreate = () => {
@@ -199,13 +211,10 @@ export default function StudentsPage() {
     }
   };
 
-  const confirmDelete = (student: Student) => {
-    confirmDialog({
-      message: `¿Retirar al estudiante ${student.fullName}?`,
-      header: 'Confirmar eliminación',
-      icon: 'pi pi-exclamation-triangle',
-      acceptClassName: 'p-button-danger',
-      accept: async () => {
+  const handleDelete = (student: Student) => {
+    confirmDelete({
+      entityLabel: `al estudiante ${student.fullName}`,
+      onAccept: async () => {
         try {
           await deleteStudent(student.id);
           toast.current?.show({
@@ -232,11 +241,15 @@ export default function StudentsPage() {
         : student.status === 'INACTIVO'
           ? 'warning'
           : 'danger';
-    return <Tag value={student.status} severity={severity} />;
+    return (
+      <div className="flex justify-center">
+        <Tag value={statusLabels[student.status]} severity={severity} />
+      </div>
+    );
   };
 
   const actionsTemplate = (student: Student) => (
-    <div className="flex gap-2">
+    <div className="flex justify-center gap-2">
       <Button
         icon="pi pi-pencil"
         rounded
@@ -250,7 +263,7 @@ export default function StudentsPage() {
         rounded
         text
         severity="danger"
-        onClick={() => confirmDelete(student)}
+        onClick={() => handleDelete(student)}
         tooltip="Eliminar"
       />
     </div>
@@ -259,19 +272,12 @@ export default function StudentsPage() {
   const header = (
     <div className="flex flex-wrap items-center justify-between gap-3">
       <span className="text-lg font-semibold">Listado de estudiantes</span>
-      <span className="p-input-icon-left">
-        <i className="pi pi-search" />
-        <InputText
-          value={globalFilter}
-          onChange={(e) => setGlobalFilter(e.target.value)}
-          placeholder="Buscar..."
-        />
-      </span>
+      <TableSearchInput value={globalFilter} onChange={setGlobalFilter} />
     </div>
   );
 
   const hqOptions = isAdmin
-    ? headquarters.map((hq) => ({
+    ? activeHeadquarters.map((hq) => ({
         label: `${hq.name} (${hq.city})`,
         value: hq.id,
       }))
@@ -283,6 +289,8 @@ export default function StudentsPage() {
           },
         ]
       : [];
+
+  const formKey = editing?.id ?? 'create';
 
   return (
     <div>
@@ -296,7 +304,12 @@ export default function StudentsPage() {
             : `Estudiantes de tu sede: ${currentUser?.headquarter?.name ?? ''}`
         }
         action={
-          <Button label="Nuevo estudiante" icon="pi pi-plus" onClick={openCreate} />
+          <Button
+            label="Nuevo estudiante"
+            icon="pi pi-plus"
+            className="btn-dna-primary"
+            onClick={openCreate}
+          />
         }
       />
 
@@ -328,14 +341,26 @@ export default function StudentsPage() {
           sortField="headquarter.name"
         />
         <Column field="program" header="Programa" sortable filter filterPlaceholder="Buscar" />
-        <Column field="status" header="Estado" body={statusTemplate} sortable filter />
+        <Column
+          field="status"
+          header="Estado"
+          body={statusTemplate}
+          sortable
+          filter
+          bodyClassName="text-center"
+        />
         <Column
           field="enrollmentDate"
           header="Matrícula"
           body={(row: Student) => formatDate(row.enrollmentDate)}
           sortable
         />
-        <Column header="Acciones" body={actionsTemplate} style={{ width: '8rem' }} />
+        <Column
+          header="Acciones"
+          body={actionsTemplate}
+          bodyClassName="text-center"
+          style={{ width: '8rem' }}
+        />
       </DataTable>
 
       <Dialog
@@ -345,33 +370,74 @@ export default function StudentsPage() {
         className="w-full max-w-2xl"
         modal
       >
-        <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4 md:grid-cols-2">
-          <div className="md:col-span-2">
-            <label className="mb-1 block text-sm text-dna-muted">Nombre completo</label>
-            <InputText className="w-full" {...register('fullName', { required: true })} />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm text-dna-muted">Correo</label>
-            <InputText className="w-full" type="email" {...register('email', { required: true })} />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm text-dna-muted">Teléfono</label>
-            <InputText className="w-full" {...register('phone', { required: true })} />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm text-dna-muted">Documento</label>
-            <InputText className="w-full" {...register('identityCard', { required: true })} />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm text-dna-muted">Programa</label>
-            <InputText className="w-full" {...register('program', { required: true })} />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm text-dna-muted">Sede</label>
+        <form
+          key={formKey}
+          autoComplete="off"
+          onSubmit={handleSubmit(onSubmit)}
+          className="grid gap-4 md:grid-cols-2"
+        >
+          <FormField
+            label="Nombre completo"
+            error={errors.fullName?.message}
+            htmlFor="student-fullname"
+            className="md:col-span-2"
+          >
+            <InputText
+              id="student-fullname"
+              className="w-full"
+              autoComplete="off"
+              {...register('fullName', { required: validationMessages.required })}
+            />
+          </FormField>
+          <FormField
+            label="Correo"
+            error={errors.email?.message}
+            htmlFor="student-email"
+            className="md:col-span-2"
+          >
+            <InputText
+              id="student-email"
+              className="w-full"
+              type="email"
+              autoComplete="off"
+              {...register('email', {
+                required: validationMessages.required,
+                pattern: {
+                  value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                  message: validationMessages.email,
+                },
+              })}
+            />
+          </FormField>
+          <FormField label="Teléfono" error={errors.phone?.message} htmlFor="student-phone">
+            <InputText
+              id="student-phone"
+              className="w-full"
+              autoComplete="off"
+              {...register('phone', { required: validationMessages.required })}
+            />
+          </FormField>
+          <FormField label="Documento" error={errors.identityCard?.message} htmlFor="student-id">
+            <InputText
+              id="student-id"
+              className="w-full"
+              autoComplete="off"
+              {...register('identityCard', { required: validationMessages.required })}
+            />
+          </FormField>
+          <FormField label="Programa" error={errors.program?.message} htmlFor="student-program">
+            <InputText
+              id="student-program"
+              className="w-full"
+              autoComplete="off"
+              {...register('program', { required: validationMessages.required })}
+            />
+          </FormField>
+          <FormField label="Sede" error={errors.headquarterId?.message}>
             <Controller
               name="headquarterId"
               control={control}
-              rules={{ required: true }}
+              rules={{ required: validationMessages.required }}
               render={({ field }) => (
                 <Dropdown
                   className="w-full"
@@ -383,9 +449,8 @@ export default function StudentsPage() {
                 />
               )}
             />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm text-dna-muted">Estado</label>
+          </FormField>
+          <FormField label="Estado" error={errors.status?.message}>
             <Controller
               name="status"
               control={control}
@@ -398,9 +463,8 @@ export default function StudentsPage() {
                 />
               )}
             />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm text-dna-muted">Fecha de matrícula</label>
+          </FormField>
+          <FormField label="Fecha de matrícula" error={errors.enrollmentDate?.message}>
             <Controller
               name="enrollmentDate"
               control={control}
@@ -414,7 +478,7 @@ export default function StudentsPage() {
                 />
               )}
             />
-          </div>
+          </FormField>
           <div className="flex justify-end gap-2 md:col-span-2">
             <Button
               type="button"
@@ -423,7 +487,7 @@ export default function StudentsPage() {
               outlined
               onClick={() => setDialogVisible(false)}
             />
-            <Button type="submit" label="Guardar" loading={isSubmitting} />
+            <Button type="submit" label="Guardar" className="btn-dna-primary" loading={isSubmitting} />
           </div>
         </form>
       </Dialog>

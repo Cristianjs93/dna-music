@@ -8,6 +8,8 @@ import { Message } from 'primereact/message';
 import { useAppDispatch } from '@/hooks/useAppDispatch';
 import { login } from '@/services/auth.service';
 import { setCredentials } from '@/store/authSlice';
+import { FormField } from '@/components/common/FormField';
+import { validationMessages } from '@/utils/errorMessages';
 import { getErrorMessage } from '@/utils/format';
 
 interface LoginFormValues {
@@ -23,7 +25,7 @@ export default function LoginPage() {
     register,
     control,
     handleSubmit,
-    formState: { isSubmitting },
+    formState: { isSubmitting, errors },
   } = useForm<LoginFormValues>({
     defaultValues: {
       email: '',
@@ -66,40 +68,42 @@ export default function LoginPage() {
 
         {error && <Message severity="error" text={error} className="mb-4 w-full" />}
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-          <div>
-            <label htmlFor="email" className="mb-2 block text-xs font-semibold uppercase text-dna-muted">
-              Correo
-            </label>
+        <form autoComplete="on" onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          <FormField label="Correo" error={errors.email?.message} htmlFor="login-email">
             <InputText
-              id="email"
+              id="login-email"
               type="email"
-              className="w-full border-0 border-b border-dna-border bg-transparent"
-              {...register('email', { required: true })}
+              className="w-full"
+              autoComplete="username"
+              {...register('email', {
+                required: validationMessages.required,
+                pattern: {
+                  value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                  message: validationMessages.email,
+                },
+              })}
             />
-          </div>
+          </FormField>
 
-          <div>
-            <label htmlFor="password" className="mb-2 block text-xs font-semibold uppercase text-dna-muted">
-              Contraseña
-            </label>
+          <FormField label="Contraseña" error={errors.password?.message} htmlFor="login-password">
             <Controller
               name="password"
               control={control}
-              rules={{ required: true }}
+              rules={{ required: validationMessages.required }}
               render={({ field }) => (
                 <Password
-                  inputId="password"
+                  inputId="login-password"
                   toggleMask
                   feedback={false}
                   className="w-full"
-                  inputClassName="w-full border-0 border-b border-dna-border bg-transparent"
+                  inputClassName="w-full"
+                  autoComplete="current-password"
                   value={field.value}
                   onChange={(e) => field.onChange(e.target.value)}
                 />
               )}
             />
-          </div>
+          </FormField>
 
           <Button
             type="submit"
@@ -107,7 +111,7 @@ export default function LoginPage() {
             icon="pi pi-arrow-right"
             iconPos="right"
             loading={isSubmitting}
-            className="mt-2 w-full"
+            className="btn-dna-primary mt-2 w-full"
           />
         </form>
       </div>

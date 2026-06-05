@@ -3,14 +3,16 @@ import { useForm, Controller } from 'react-hook-form';
 import { FilterMatchMode } from 'primereact/api';
 import { Button } from 'primereact/button';
 import { Column } from 'primereact/column';
-import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
+import { ConfirmDialog } from 'primereact/confirmdialog';
 import { DataTable, type DataTableFilterMeta } from 'primereact/datatable';
 import { Dialog } from 'primereact/dialog';
 import { InputSwitch } from 'primereact/inputswitch';
 import { InputText } from 'primereact/inputtext';
 import { Tag } from 'primereact/tag';
 import { Toast } from 'primereact/toast';
+import { FormField } from '@/components/common/FormField';
 import { PageHeader } from '@/components/common/PageHeader';
+import { TableSearchInput } from '@/components/common/TableSearchInput';
 import {
   createHeadquarter,
   deleteHeadquarter,
@@ -19,6 +21,8 @@ import {
   updateHeadquarter,
 } from '@/services/headquarters.service';
 import type { Headquarter } from '@/types/api.types';
+import { confirmDelete } from '@/utils/confirmDelete';
+import { validationMessages } from '@/utils/errorMessages';
 import { formatDate, getErrorMessage } from '@/utils/format';
 
 interface HeadquarterFormValues {
@@ -48,7 +52,7 @@ export default function HeadquartersPage() {
     handleSubmit,
     reset,
     control,
-    formState: { isSubmitting },
+    formState: { isSubmitting, errors },
   } = useForm<HeadquarterFormValues>({
     defaultValues: {
       name: '',
@@ -130,13 +134,10 @@ export default function HeadquartersPage() {
     }
   };
 
-  const confirmDelete = (hq: Headquarter) => {
-    confirmDialog({
-      message: `¿Eliminar la sede ${hq.name}?`,
-      header: 'Confirmar eliminación',
-      icon: 'pi pi-exclamation-triangle',
-      acceptClassName: 'p-button-danger',
-      accept: async () => {
+  const handleDelete = (hq: Headquarter) => {
+    confirmDelete({
+      entityLabel: `la sede ${hq.name}`,
+      onAccept: async () => {
         try {
           await deleteHeadquarter(hq.id);
           toast.current?.show({
@@ -157,14 +158,16 @@ export default function HeadquartersPage() {
   };
 
   const statusTemplate = (hq: Headquarter) => (
-    <Tag
-      value={hq.isActive ? 'Activa' : 'Inactiva'}
-      severity={hq.isActive ? 'success' : 'danger'}
-    />
+    <div className="flex justify-center">
+      <Tag
+        value={hq.isActive ? 'Activa' : 'Inactiva'}
+        severity={hq.isActive ? 'success' : 'danger'}
+      />
+    </div>
   );
 
   const actionsTemplate = (hq: Headquarter) => (
-    <div className="flex gap-2">
+    <div className="flex justify-center gap-2">
       <Button
         icon="pi pi-pencil"
         rounded
@@ -178,7 +181,7 @@ export default function HeadquartersPage() {
         rounded
         text
         severity="danger"
-        onClick={() => confirmDelete(hq)}
+        onClick={() => handleDelete(hq)}
         tooltip="Eliminar"
       />
     </div>
@@ -187,16 +190,11 @@ export default function HeadquartersPage() {
   const header = (
     <div className="flex flex-wrap items-center justify-between gap-3">
       <span className="text-lg font-semibold">Listado de sedes</span>
-      <span className="p-input-icon-left">
-        <i className="pi pi-search" />
-        <InputText
-          value={globalFilter}
-          onChange={(e) => setGlobalFilter(e.target.value)}
-          placeholder="Buscar..."
-        />
-      </span>
+      <TableSearchInput value={globalFilter} onChange={setGlobalFilter} />
     </div>
   );
+
+  const formKey = editing?.id ?? 'create';
 
   return (
     <div>
@@ -205,7 +203,14 @@ export default function HeadquartersPage() {
       <PageHeader
         title="Sedes"
         subtitle="Administración de sedes y ubicaciones."
-        action={<Button label="Nueva sede" icon="pi pi-plus" onClick={openCreate} />}
+        action={
+          <Button
+            label="Nueva sede"
+            icon="pi pi-plus"
+            className="btn-dna-primary"
+            onClick={openCreate}
+          />
+        }
       />
 
       <DataTable
@@ -228,14 +233,25 @@ export default function HeadquartersPage() {
         <Column field="name" header="Nombre" sortable filter filterPlaceholder="Buscar" />
         <Column field="city" header="Ciudad" sortable filter filterPlaceholder="Buscar" />
         <Column field="address" header="Dirección" sortable />
-        <Column header="Estado" body={statusTemplate} sortable sortField="isActive" />
+        <Column
+          header="Estado"
+          body={statusTemplate}
+          sortable
+          sortField="isActive"
+          bodyClassName="text-center"
+        />
         <Column
           field="createdAt"
           header="Creado"
           body={(row: Headquarter) => formatDate(row.createdAt)}
           sortable
         />
-        <Column header="Acciones" body={actionsTemplate} style={{ width: '8rem' }} />
+        <Column
+          header="Acciones"
+          body={actionsTemplate}
+          bodyClassName="text-center"
+          style={{ width: '8rem' }}
+        />
       </DataTable>
 
       <Dialog
@@ -245,19 +261,36 @@ export default function HeadquartersPage() {
         className="w-full max-w-lg"
         modal
       >
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div>
-            <label className="mb-1 block text-sm text-dna-muted">Nombre</label>
-            <InputText className="w-full" {...register('name', { required: true })} />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm text-dna-muted">Ciudad</label>
-            <InputText className="w-full" {...register('city', { required: true })} />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm text-dna-muted">Dirección</label>
-            <InputText className="w-full" {...register('address', { required: true })} />
-          </div>
+        <form
+          key={formKey}
+          autoComplete="off"
+          onSubmit={handleSubmit(onSubmit)}
+          className="space-y-4"
+        >
+          <FormField label="Nombre" error={errors.name?.message} htmlFor="hq-name">
+            <InputText
+              id="hq-name"
+              className="w-full"
+              autoComplete="off"
+              {...register('name', { required: validationMessages.required })}
+            />
+          </FormField>
+          <FormField label="Ciudad" error={errors.city?.message} htmlFor="hq-city">
+            <InputText
+              id="hq-city"
+              className="w-full"
+              autoComplete="off"
+              {...register('city', { required: validationMessages.required })}
+            />
+          </FormField>
+          <FormField label="Dirección" error={errors.address?.message} htmlFor="hq-address">
+            <InputText
+              id="hq-address"
+              className="w-full"
+              autoComplete="off"
+              {...register('address', { required: validationMessages.required })}
+            />
+          </FormField>
           <div className="flex items-center gap-3">
             <Controller
               name="isActive"
@@ -276,7 +309,7 @@ export default function HeadquartersPage() {
               outlined
               onClick={() => setDialogVisible(false)}
             />
-            <Button type="submit" label="Guardar" loading={isSubmitting} />
+            <Button type="submit" label="Guardar" className="btn-dna-primary" loading={isSubmitting} />
           </div>
         </form>
       </Dialog>

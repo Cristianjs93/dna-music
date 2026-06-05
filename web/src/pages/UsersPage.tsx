@@ -3,14 +3,16 @@ import { useForm, Controller } from 'react-hook-form';
 import { FilterMatchMode } from 'primereact/api';
 import { Button } from 'primereact/button';
 import { Column } from 'primereact/column';
-import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
+import { ConfirmDialog } from 'primereact/confirmdialog';
 import { DataTable, type DataTableFilterMeta } from 'primereact/datatable';
 import { Dialog } from 'primereact/dialog';
 import { Dropdown } from 'primereact/dropdown';
 import { InputText } from 'primereact/inputtext';
 import { Password } from 'primereact/password';
 import { Toast } from 'primereact/toast';
+import { FormField } from '@/components/common/FormField';
 import { PageHeader } from '@/components/common/PageHeader';
+import { TableSearchInput } from '@/components/common/TableSearchInput';
 import { listHeadquarters } from '@/services/headquarters.service';
 import {
   createUser,
@@ -25,6 +27,8 @@ import type {
   UpdateUserPayload,
   User,
 } from '@/types/api.types';
+import { confirmDelete } from '@/utils/confirmDelete';
+import { validationMessages } from '@/utils/errorMessages';
 import { formatDate, getErrorMessage } from '@/utils/format';
 
 interface UserFormValues {
@@ -63,7 +67,7 @@ export default function UsersPage() {
     handleSubmit,
     reset,
     watch,
-    formState: { isSubmitting },
+    formState: { isSubmitting, errors },
   } = useForm<UserFormValues>({
     defaultValues: {
       name: '',
@@ -75,6 +79,7 @@ export default function UsersPage() {
   });
 
   const selectedRole = watch('role');
+  const activeHeadquarters = headquarters.filter((hq) => hq.isActive);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -107,7 +112,7 @@ export default function UsersPage() {
       email: '',
       password: '',
       role: 'OPERADOR',
-      headquarterId: headquarters[0]?.id ?? null,
+      headquarterId: activeHeadquarters[0]?.id ?? null,
     });
     setDialogVisible(true);
   };
@@ -169,13 +174,10 @@ export default function UsersPage() {
     }
   };
 
-  const confirmDelete = (user: User) => {
-    confirmDialog({
-      message: `¿Eliminar al usuario ${user.name}?`,
-      header: 'Confirmar eliminación',
-      icon: 'pi pi-exclamation-triangle',
-      acceptClassName: 'p-button-danger',
-      accept: async () => {
+  const handleDelete = (user: User) => {
+    confirmDelete({
+      entityLabel: `al usuario ${user.name}`,
+      onAccept: async () => {
         try {
           await deleteUser(user.id);
           toast.current?.show({
@@ -196,7 +198,7 @@ export default function UsersPage() {
   };
 
   const actionsTemplate = (user: User) => (
-    <div className="flex gap-2">
+    <div className="flex justify-center gap-2">
       <Button
         icon="pi pi-pencil"
         rounded
@@ -210,7 +212,7 @@ export default function UsersPage() {
         rounded
         text
         severity="danger"
-        onClick={() => confirmDelete(user)}
+        onClick={() => handleDelete(user)}
         tooltip="Eliminar"
       />
     </div>
@@ -219,16 +221,11 @@ export default function UsersPage() {
   const header = (
     <div className="flex flex-wrap items-center justify-between gap-3">
       <span className="text-lg font-semibold">Listado de usuarios</span>
-      <span className="p-input-icon-left">
-        <i className="pi pi-search" />
-        <InputText
-          value={globalFilter}
-          onChange={(e) => setGlobalFilter(e.target.value)}
-          placeholder="Buscar..."
-        />
-      </span>
+      <TableSearchInput value={globalFilter} onChange={setGlobalFilter} />
     </div>
   );
+
+  const formKey = editingUser?.id ?? 'create';
 
   return (
     <div>
@@ -238,7 +235,12 @@ export default function UsersPage() {
         title="Usuarios"
         subtitle="Gestión de cuentas internas y roles de acceso."
         action={
-          <Button label="Nuevo usuario" icon="pi pi-plus" onClick={openCreate} />
+          <Button
+            label="Nuevo usuario"
+            icon="pi pi-plus"
+            className="btn-dna-primary"
+            onClick={openCreate}
+          />
         }
       />
 
@@ -274,7 +276,12 @@ export default function UsersPage() {
           body={(row: User) => formatDate(row.createdAt)}
           sortable
         />
-        <Column header="Acciones" body={actionsTemplate} style={{ width: '8rem' }} />
+        <Column
+          header="Acciones"
+          body={actionsTemplate}
+          bodyClassName="text-center"
+          style={{ width: '8rem' }}
+        />
       </DataTable>
 
       <Dialog
@@ -284,40 +291,67 @@ export default function UsersPage() {
         className="w-full max-w-lg"
         modal
       >
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div>
-            <label className="mb-1 block text-sm text-dna-muted">Nombre</label>
-            <InputText className="w-full" {...register('name', { required: true })} />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm text-dna-muted">Correo</label>
-            <InputText className="w-full" type="email" {...register('email', { required: true })} />
-          </div>
+        <form
+          key={formKey}
+          autoComplete="off"
+          onSubmit={handleSubmit(onSubmit)}
+          className="space-y-4"
+        >
+          <FormField label="Nombre" error={errors.name?.message} htmlFor="user-name">
+            <InputText
+              id="user-name"
+              className="w-full"
+              autoComplete="off"
+              {...register('name', { required: validationMessages.required })}
+            />
+          </FormField>
+          <FormField label="Correo" error={errors.email?.message} htmlFor="user-email">
+            <InputText
+              id="user-email"
+              className="w-full"
+              type="email"
+              autoComplete="off"
+              {...register('email', {
+                required: validationMessages.required,
+                pattern: {
+                  value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                  message: validationMessages.email,
+                },
+              })}
+            />
+          </FormField>
           {!editingUser && (
-            <div>
-              <label className="mb-1 block text-sm text-dna-muted">Contraseña</label>
+            <FormField label="Contraseña" error={errors.password?.message} htmlFor="user-password">
               <Controller
                 name="password"
                 control={control}
-                rules={{ required: true, minLength: 8 }}
+                rules={{
+                  required: validationMessages.required,
+                  minLength: {
+                    value: 8,
+                    message: validationMessages.minLength(8),
+                  },
+                }}
                 render={({ field }) => (
                   <Password
+                    inputId="user-password"
                     className="w-full"
                     inputClassName="w-full"
                     toggleMask
                     feedback={false}
+                    autoComplete="new-password"
                     value={field.value}
                     onChange={(e) => field.onChange(e.target.value)}
                   />
                 )}
               />
-            </div>
+            </FormField>
           )}
-          <div>
-            <label className="mb-1 block text-sm text-dna-muted">Rol</label>
+          <FormField label="Rol" error={errors.role?.message}>
             <Controller
               name="role"
               control={control}
+              rules={{ required: validationMessages.required }}
               render={({ field }) => (
                 <Dropdown
                   className="w-full"
@@ -327,18 +361,17 @@ export default function UsersPage() {
                 />
               )}
             />
-          </div>
+          </FormField>
           {selectedRole === 'OPERADOR' && (
-            <div>
-              <label className="mb-1 block text-sm text-dna-muted">Sede</label>
+            <FormField label="Sede" error={errors.headquarterId?.message}>
               <Controller
                 name="headquarterId"
                 control={control}
-                rules={{ required: selectedRole === 'OPERADOR' }}
+                rules={{ required: validationMessages.required }}
                 render={({ field }) => (
                   <Dropdown
                     className="w-full"
-                    options={headquarters.map((hq) => ({
+                    options={activeHeadquarters.map((hq) => ({
                       label: `${hq.name} (${hq.city})`,
                       value: hq.id,
                     }))}
@@ -348,7 +381,7 @@ export default function UsersPage() {
                   />
                 )}
               />
-            </div>
+            </FormField>
           )}
           <div className="flex justify-end gap-2 pt-2">
             <Button
@@ -358,7 +391,7 @@ export default function UsersPage() {
               outlined
               onClick={() => setDialogVisible(false)}
             />
-            <Button type="submit" label="Guardar" loading={isSubmitting} />
+            <Button type="submit" label="Guardar" className="btn-dna-primary" loading={isSubmitting} />
           </div>
         </form>
       </Dialog>

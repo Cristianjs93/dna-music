@@ -14,19 +14,66 @@ body {
   @apply min-h-screen;
 }
 
+/* ── Inputs & form controls ── */
 .p-inputtext,
+.p-password-input,
 .p-dropdown,
 .p-calendar .p-inputtext,
 .p-inputnumber-input {
   @apply w-full bg-dna-surface text-white;
+  border: 1px solid #4a4a4a !important;
+  border-radius: 0.375rem;
+  padding: 0.625rem 0.875rem !important;
 }
 
+.p-inputtext:enabled:focus,
+.p-password-input:enabled:focus,
+.p-dropdown:not(.p-disabled).p-focus,
+.p-calendar .p-inputtext:enabled:focus {
+  border-color: #fdb913 !important;
+  box-shadow: 0 0 0 1px #fdb913 !important;
+  outline: none;
+}
+
+.p-dropdown-panel,
+.p-datepicker {
+  @apply bg-dna-surface text-white;
+  border: 1px solid #4a4a4a !important;
+}
+
+.p-dropdown-panel .p-dropdown-item {
+  @apply text-white;
+}
+
+.p-dropdown-panel .p-dropdown-item.p-highlight {
+  background: #fdb913 !important;
+  color: #000 !important;
+}
+
+/* ── Dialogs ── */
 .p-dialog .p-dialog-header,
 .p-dialog .p-dialog-content,
 .p-dialog .p-dialog-footer {
   @apply bg-dna-surface text-white;
 }
 
+.p-confirm-dialog .p-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.p-confirm-dialog .p-dialog-footer .p-button {
+  margin: 0 !important;
+  min-width: 6.5rem;
+}
+
+.p-confirm-dialog .confirm-delete-accept:focus,
+.p-confirm-dialog .confirm-delete-reject:focus {
+  box-shadow: 0 0 0 2px #fdb913 !important;
+}
+
+/* ── DataTable & paginator ── */
 .p-datatable .p-datatable-header,
 .p-datatable .p-datatable-thead > tr > th,
 .p-datatable .p-datatable-tbody > tr > td,
@@ -34,10 +81,67 @@ body {
   @apply bg-dna-surface text-white;
 }
 
+.p-datatable .p-datatable-tbody > tr > td.text-center {
+  text-align: center;
+}
+
+.p-paginator .p-dropdown {
+  border: 1px solid #6b6b6b !important;
+  background: #1e1e1e !important;
+  border-radius: 0.375rem;
+}
+
+.p-paginator .p-dropdown .p-dropdown-label {
+  color: #fff !important;
+  padding: 0.5rem 0.75rem !important;
+}
+
+.p-paginator .p-dropdown .p-dropdown-trigger {
+  color: #fdb913 !important;
+}
+
+.p-paginator .p-dropdown-panel {
+  background: #1e1e1e !important;
+  border: 1px solid #6b6b6b !important;
+}
+
+.p-paginator .p-dropdown-panel .p-dropdown-item {
+  color: #fff !important;
+}
+
+.p-paginator .p-dropdown-panel .p-dropdown-item.p-highlight {
+  background: #fdb913 !important;
+  color: #000 !important;
+}
+
+/* ── Table search ── */
+.table-search {
+  min-width: 14rem;
+}
+
+.table-search .p-inputicon {
+  color: #a3a3a3;
+  left: 0.75rem;
+}
+
+.table-search-input {
+  padding-left: 2.5rem !important;
+  min-width: 14rem;
+}
+
+/* ── Primary / CTA buttons ── */
+.btn-dna-primary.p-button {
+  @apply border-dna-gold bg-dna-gold font-semibold text-black;
+}
+
+.btn-dna-primary.p-button:enabled:hover {
+  @apply border-dna-gold-dark bg-dna-gold-dark text-black;
+}
+
 .p-button.p-button-primary {
   @apply border-dna-gold bg-dna-gold text-black;
 }
 
-.p-button.p-button-primary:hover {
+.p-button.p-button-primary:enabled:hover {
   @apply border-dna-gold-dark bg-dna-gold-dark;
 }

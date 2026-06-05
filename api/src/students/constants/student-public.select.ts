@@ -1,4 +1,5 @@
 import type { Prisma } from '#generated/prisma';
+import { auditUserSummarySelect } from '#util/audit/audit.constants';
 
 export const studentPublicSelect = {
   id: true,
@@ -10,6 +11,8 @@ export const studentPublicSelect = {
   status: true,
   enrollmentDate: true,
   headquarterId: true,
+  createdById: true,
+  updatedById: true,
   createdAt: true,
   updatedAt: true,
   deletedAt: true,
@@ -20,6 +23,8 @@ export const studentPublicSelect = {
       city: true,
     },
   },
+  createdBy: { select: auditUserSummarySelect },
+  updatedBy: { select: auditUserSummarySelect },
 } satisfies Prisma.StudentSelect;
 
 export type StudentPublic = Prisma.StudentGetPayload<{

@@ -1,6 +1,7 @@
 # Dependencies and local artifacts
 node_modules
 dist
+# generated/ is produced inside the image during build
 generated
 coverage
 .next

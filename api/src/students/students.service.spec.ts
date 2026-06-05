@@ -26,6 +26,10 @@ describe('StudentsService', () => {
     email: 'admin@dnamusic.co',
     role: Role.ADMIN,
     headquarterId: null,
+    createdById: null,
+    updatedById: null,
+    createdBy: null,
+    updatedBy: null,
     createdAt: new Date(),
     updatedAt: new Date(),
     deletedAt: null,
@@ -38,6 +42,10 @@ describe('StudentsService', () => {
     email: 'operador.bog@dnamusic.co',
     role: Role.OPERADOR,
     headquarterId: bogotaId,
+    createdById: null,
+    updatedById: null,
+    createdBy: null,
+    updatedBy: null,
     createdAt: new Date(),
     updatedAt: new Date(),
     deletedAt: null,
@@ -58,6 +66,18 @@ describe('StudentsService', () => {
     ...baseCreateDto,
     status: StudentStatus.ACTIVO,
     enrollmentDate: new Date(),
+    createdById: operatorBogota.id,
+    updatedById: operatorBogota.id,
+    createdBy: {
+      id: operatorBogota.id,
+      name: operatorBogota.name,
+      email: operatorBogota.email,
+    },
+    updatedBy: {
+      id: operatorBogota.id,
+      name: operatorBogota.name,
+      email: operatorBogota.email,
+    },
     createdAt: new Date(),
     updatedAt: new Date(),
     deletedAt: null,
@@ -101,7 +121,11 @@ describe('StudentsService', () => {
       expect(result).toEqual(createdStudent);
       expect(prisma.student.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({ headquarterId: bogotaId }),
+          data: expect.objectContaining({
+            headquarterId: bogotaId,
+            createdById: operatorBogota.id,
+            updatedById: operatorBogota.id,
+          }),
         }),
       );
     });

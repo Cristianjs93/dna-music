@@ -15,6 +15,8 @@ import {
 import { CreateHeadquarterDto } from './dto/create-headquarter.dto';
 import { UpdateHeadquarterDto } from './dto/update-headquarter.dto';
 import { SetHeadquarterStatusDto } from './dto/set-headquarter-status.dto';
+import type { AuthenticatedUser } from '#/auth/interfaces/authenticated-user.interface';
+import { auditOnCreate, auditOnUpdate } from '#util/audit/audit.constants';
 
 @Injectable()
 export class HeadquartersService {
@@ -26,7 +28,10 @@ export class HeadquartersService {
    * Creates a new headquarter; defaults isActive to true when omitted.
    * @param createHeadquarterDto - Branch fields from the request body.
    */
-  async create(createHeadquarterDto: CreateHeadquarterDto): Promise<HeadquarterPublic> {
+  async create(
+    createHeadquarterDto: CreateHeadquarterDto,
+    actor: AuthenticatedUser,
+  ): Promise<HeadquarterPublic> {
     this.logger.log(`Creating headquarter name=${createHeadquarterDto.name}`);
 
     try {
@@ -36,6 +41,7 @@ export class HeadquartersService {
           city: createHeadquarterDto.city,
           address: createHeadquarterDto.address,
           isActive: createHeadquarterDto.isActive ?? true,
+          ...auditOnCreate(actor.id),
         },
         select: headquarterPublicSelect,
       });
@@ -98,7 +104,11 @@ export class HeadquartersService {
    * @param id - Headquarter UUID.
    * @param dto - `{ isActive: true | false }`.
    */
-  async setStatus(id: string, dto: SetHeadquarterStatusDto): Promise<HeadquarterPublic> {
+  async setStatus(
+    id: string,
+    dto: SetHeadquarterStatusDto,
+    actor: AuthenticatedUser,
+  ): Promise<HeadquarterPublic> {
     this.logger.log(`Setting headquarter id=${id} isActive=${dto.isActive}`);
 
     await this.ensureHeadquarterExists(id);
@@ -106,7 +116,7 @@ export class HeadquartersService {
     try {
       const headquarter = await this.prisma.headquarter.update({
         where: { id },
-        data: { isActive: dto.isActive },
+        data: { isActive: dto.isActive, ...auditOnUpdate(actor.id) },
         select: headquarterPublicSelect,
       });
 
@@ -126,7 +136,11 @@ export class HeadquartersService {
    * @param id - Headquarter UUID.
    * @param updateHeadquarterDto - Fields to update.
    */
-  async update(id: string, updateHeadquarterDto: UpdateHeadquarterDto): Promise<HeadquarterPublic> {
+  async update(
+    id: string,
+    updateHeadquarterDto: UpdateHeadquarterDto,
+    actor: AuthenticatedUser,
+  ): Promise<HeadquarterPublic> {
     this.logger.log(`Updating headquarter id=${id}`);
 
     await this.ensureHeadquarterExists(id);
@@ -135,6 +149,7 @@ export class HeadquartersService {
       name: nonEmptyStringOrUndefined(updateHeadquarterDto.name),
       city: nonEmptyStringOrUndefined(updateHeadquarterDto.city),
       address: nonEmptyStringOrUndefined(updateHeadquarterDto.address),
+      ...auditOnUpdate(actor.id),
     };
 
     try {
@@ -159,7 +174,7 @@ export class HeadquartersService {
    * Soft-deletes a headquarter by setting deletedAt.
    * @param id - Headquarter UUID.
    */
-  async remove(id: string): Promise<HeadquarterPublic> {
+  async remove(id: string, actor: AuthenticatedUser): Promise<HeadquarterPublic> {
     this.logger.log(`Soft-deleting headquarter id=${id}`);
 
     await this.ensureHeadquarterExists(id);
@@ -167,7 +182,7 @@ export class HeadquartersService {
     try {
       const headquarter = await this.prisma.headquarter.update({
         where: { id },
-        data: { deletedAt: new Date() },
+        data: { deletedAt: new Date(), ...auditOnUpdate(actor.id) },
         select: headquarterPublicSelect,
       });
 

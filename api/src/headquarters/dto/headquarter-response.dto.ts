@@ -1,4 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { AuditUserSummaryDto } from '#/users/dto/audit-user-summary.dto';
 
 export class HeadquarterResponseDto {
   @ApiProperty({ format: 'uuid' })
@@ -15,6 +16,18 @@ export class HeadquarterResponseDto {
 
   @ApiProperty({ example: true })
   isActive!: boolean;
+
+  @ApiProperty({ format: 'uuid', nullable: true })
+  createdById!: string | null;
+
+  @ApiProperty({ format: 'uuid', nullable: true })
+  updatedById!: string | null;
+
+  @ApiPropertyOptional({ type: AuditUserSummaryDto, nullable: true })
+  createdBy!: AuditUserSummaryDto | null;
+
+  @ApiPropertyOptional({ type: AuditUserSummaryDto, nullable: true })
+  updatedBy!: AuditUserSummaryDto | null;
 
   @ApiProperty({ type: String, format: 'date-time' })
   createdAt!: Date;

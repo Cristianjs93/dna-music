@@ -1,5 +1,6 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Role } from '#generated/prisma';
+import { AuditUserSummaryDto } from './audit-user-summary.dto';
 import { HeadquarterSummaryDto } from './headquarter-summary.dto';
 
 export class UserResponseDto {
@@ -24,6 +25,26 @@ export class UserResponseDto {
 
   @ApiProperty({ type: HeadquarterSummaryDto, nullable: true })
   headquarter!: HeadquarterSummaryDto | null;
+
+  @ApiProperty({
+    format: 'uuid',
+    nullable: true,
+    description: 'User who created this record',
+  })
+  createdById!: string | null;
+
+  @ApiProperty({
+    format: 'uuid',
+    nullable: true,
+    description: 'User who last modified this record',
+  })
+  updatedById!: string | null;
+
+  @ApiPropertyOptional({ type: AuditUserSummaryDto, nullable: true })
+  createdBy!: AuditUserSummaryDto | null;
+
+  @ApiPropertyOptional({ type: AuditUserSummaryDto, nullable: true })
+  updatedBy!: AuditUserSummaryDto | null;
 
   @ApiProperty({ type: String, format: 'date-time' })
   createdAt!: Date;

@@ -24,6 +24,8 @@ import {
 } from '@nestjs/swagger';
 import { Role } from '#generated/prisma';
 import { Roles } from '#/auth/decorators/roles.decorator';
+import { CurrentUser } from '#/auth/decorators/current-user.decorator';
+import type { AuthenticatedUser } from '#/auth/interfaces/authenticated-user.interface';
 import { CreateHeadquarterDto } from './dto/create-headquarter.dto';
 import { UpdateHeadquarterDto } from './dto/update-headquarter.dto';
 import { SetHeadquarterStatusDto } from './dto/set-headquarter-status.dto';
@@ -43,8 +45,11 @@ export class HeadquartersController {
   @ApiOperation({ summary: 'Create a headquarter (ADMIN only)' })
   @ApiCreatedResponse({ type: HeadquarterResponseDto })
   @ApiConflictResponse({ description: 'Headquarter name already exists' })
-  create(@Body() createHeadquarterDto: CreateHeadquarterDto): Promise<HeadquarterResponseDto> {
-    return this.headquartersService.create(createHeadquarterDto);
+  create(
+    @Body() createHeadquarterDto: CreateHeadquarterDto,
+    @CurrentUser() actor: AuthenticatedUser,
+  ): Promise<HeadquarterResponseDto> {
+    return this.headquartersService.create(createHeadquarterDto, actor);
   }
 
   @Get()
@@ -71,8 +76,9 @@ export class HeadquartersController {
   setStatus(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() setHeadquarterStatusDto: SetHeadquarterStatusDto,
+    @CurrentUser() actor: AuthenticatedUser,
   ): Promise<HeadquarterResponseDto> {
-    return this.headquartersService.setStatus(id, setHeadquarterStatusDto);
+    return this.headquartersService.setStatus(id, setHeadquarterStatusDto, actor);
   }
 
   @Patch(':id')
@@ -84,8 +90,9 @@ export class HeadquartersController {
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateHeadquarterDto: UpdateHeadquarterDto,
+    @CurrentUser() actor: AuthenticatedUser,
   ): Promise<HeadquarterResponseDto> {
-    return this.headquartersService.update(id, updateHeadquarterDto);
+    return this.headquartersService.update(id, updateHeadquarterDto, actor);
   }
 
   @Delete(':id')
@@ -94,7 +101,10 @@ export class HeadquartersController {
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiOkResponse({ type: HeadquarterResponseDto })
   @ApiNotFoundResponse({ description: 'Headquarter not found' })
-  remove(@Param('id', ParseUUIDPipe) id: string): Promise<HeadquarterResponseDto> {
-    return this.headquartersService.remove(id);
+  remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() actor: AuthenticatedUser,
+  ): Promise<HeadquarterResponseDto> {
+    return this.headquartersService.remove(id, actor);
   }
 }

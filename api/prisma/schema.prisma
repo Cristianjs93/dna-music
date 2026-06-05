@@ -29,28 +29,46 @@ model User {
   role          Role         @default(OPERADOR)
   headquarterId String?      @map("headquarter_id")
   headquarter   Headquarter? @relation(fields: [headquarterId], references: [id])
+  createdById   String?      @map("created_by_id")
+  updatedById   String?      @map("updated_by_id")
+  createdBy     User?        @relation("UserCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy     User?        @relation("UserUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  usersCreated  User[]       @relation("UserCreatedBy")
+  usersUpdated  User[]       @relation("UserUpdatedBy")
+  headquartersCreated Headquarter[] @relation("HeadquarterCreatedBy")
+  headquartersUpdated Headquarter[] @relation("HeadquarterUpdatedBy")
+  studentsCreated     Student[]     @relation("StudentCreatedBy")
+  studentsUpdated     Student[]     @relation("StudentUpdatedBy")
   createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt     DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt     DateTime?    @map("deleted_at") @db.Timestamptz(6)
 
   @@index([role])
   @@index([headquarterId])
+  @@index([createdById])
+  @@index([updatedById])
   @@map("users")
 }
 
 model Headquarter {
-  id        String    @id @default(uuid())
-  name      String    @unique @db.VarChar(150)
-  city      String    @db.VarChar(100)
-  address   String    @db.VarChar(255)
-  isActive  Boolean   @default(true) @map("is_active")
-  students  Student[]
-  users     User[]
-  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+  id          String    @id @default(uuid())
+  name        String    @unique @db.VarChar(150)
+  city        String    @db.VarChar(100)
+  address     String    @db.VarChar(255)
+  isActive    Boolean   @default(true) @map("is_active")
+  createdById String?   @map("created_by_id")
+  updatedById String?   @map("updated_by_id")
+  createdBy   User?     @relation("HeadquarterCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy   User?     @relation("HeadquarterUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  students    Student[]
+  users       User[]
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
 
   @@index([isActive])
+  @@index([createdById])
+  @@index([updatedById])
   @@map("headquarters")
 }
 
@@ -65,6 +83,10 @@ model Student {
   enrollmentDate DateTime      @default(now()) @map("enrollment_date") @db.Timestamptz(6)
   headquarterId  String        @map("headquarter_id")
   headquarter    Headquarter   @relation(fields: [headquarterId], references: [id])
+  createdById    String?       @map("created_by_id")
+  updatedById    String?       @map("updated_by_id")
+  createdBy      User?         @relation("StudentCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy      User?         @relation("StudentUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
   createdAt      DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt      DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt      DateTime?     @map("deleted_at") @db.Timestamptz(6)
@@ -73,5 +95,7 @@ model Student {
   @@index([status])
   @@index([deletedAt])
   @@index([headquarterId, status])
+  @@index([createdById])
+  @@index([updatedById])
   @@map("students")
 }

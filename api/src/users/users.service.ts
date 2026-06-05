@@ -11,6 +11,7 @@ import { USER_DOMAIN_ERRORS, USER_PRISMA_ERRORS } from './constants/user-errors.
 import { isDefined, nonEmptyStringOrElse, nonEmptyStringOrUndefined } from '#util/parse.utils';
 import { domainException } from '#util/errors/domain-error.utils.js';
 import { rethrowPrismaKnownError } from '#util/errors/prisma-error.utils.js';
+import { auditOnCreate, auditOnUpdate } from '#util/audit/audit.constants';
 
 const SALT_ROUNDS = 12;
 
@@ -24,7 +25,7 @@ export class UsersService {
    * Creates a user with a bcrypt-hashed password and validates role/headquarter rules.
    * @param createUserDto - User fields from the request body.
    */
-  async create(createUserDto: CreateUserDto): Promise<UserPublic> {
+  async create(createUserDto: CreateUserDto, actor: AuthenticatedUser): Promise<UserPublic> {
     this.logger.log(`Creating user email=${createUserDto.email} role=${createUserDto.role}`);
 
     await this.validateHeadquarterAssignment(createUserDto.role, createUserDto.headquarterId);
@@ -37,6 +38,7 @@ export class UsersService {
           password: await this.hashPassword(createUserDto.password),
           role: createUserDto.role,
           headquarterId: this.resolveHeadquarterId(createUserDto.role, createUserDto.headquarterId),
+          ...auditOnCreate(actor.id),
         },
         select: userPublicSelect,
       });
@@ -134,6 +136,7 @@ export class UsersService {
       email: nonEmptyStringOrUndefined(updateUserDto.email),
       role,
       headquarterId,
+      ...auditOnUpdate(actor.id),
     };
 
     try {
@@ -158,7 +161,7 @@ export class UsersService {
    * Soft-deletes a user by setting deletedAt.
    * @param id - User UUID.
    */
-  async remove(id: string): Promise<UserPublic> {
+  async remove(id: string, actor: AuthenticatedUser): Promise<UserPublic> {
     this.logger.log(`Soft-deleting user id=${id}`);
 
     await this.ensureUserExists(id);
@@ -166,7 +169,7 @@ export class UsersService {
     try {
       const user = await this.prisma.user.update({
         where: { id },
-        data: { deletedAt: new Date() },
+        data: { deletedAt: new Date(), ...auditOnUpdate(actor.id) },
         select: userPublicSelect,
       });
 

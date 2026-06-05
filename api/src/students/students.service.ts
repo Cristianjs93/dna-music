@@ -12,6 +12,7 @@ import { STUDENT_DOMAIN_ERRORS, STUDENT_PRISMA_ERRORS } from './constants/studen
 import { CreateStudentDto } from './dto/create-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
 import { SetStudentStatusDto } from './dto/set-student-status.dto';
+import { auditOnCreate, auditOnUpdate } from '#util/audit/audit.constants';
 
 @Injectable()
 export class StudentsService {
@@ -49,6 +50,7 @@ export class StudentsService {
             ? new Date(createStudentDto.enrollmentDate)
             : undefined,
           headquarterId,
+          ...auditOnCreate(actor.id),
         },
         select: studentPublicSelect,
       });
@@ -157,6 +159,7 @@ export class StudentsService {
         ? new Date(updateStudentDto.enrollmentDate)
         : undefined,
       headquarterId,
+      ...auditOnUpdate(actor.id),
     };
 
     try {
@@ -211,7 +214,7 @@ export class StudentsService {
     try {
       const student = await this.prisma.student.update({
         where: { id },
-        data: { status },
+        data: { status, ...auditOnUpdate(actor.id) },
         select: studentPublicSelect,
       });
 
@@ -248,7 +251,11 @@ export class StudentsService {
     try {
       const student = await this.prisma.student.update({
         where: { id },
-        data: { status: StudentStatus.RETIRADO, deletedAt: new Date() },
+        data: {
+          status: StudentStatus.RETIRADO,
+          deletedAt: new Date(),
+          ...auditOnUpdate(actor.id),
+        },
         select: studentPublicSelect,
       });
 

@@ -5,9 +5,18 @@ Writing automated unit tests acts as a core metric for code resilience, safety, 
 
 ## CI
 
-- **API CI** (`.github/workflows/api-ci.yml`) runs `npm run test -- --passWithNoTests` until `.spec.ts` files exist.
-- Jest has `"watchman": false` in `api/package.json` for reliable runs in CI and sandboxes.
+- **API CI** (`.github/workflows/api-ci.yml`) runs `npm run test` on every `api/**` push/PR.
+- Jest config: `api/jest.config.ts` + `api/tsconfig.jest.json` (`moduleNameMapper` for `#/*` aliases, `watchman: false`).
 - **E2E** (`npm run test:e2e`) is not in CI yet; `test/app.e2e-spec.ts` is NestJS boilerplate and needs replacement before adding an e2e job.
+
+## Current unit test coverage (priority areas)
+
+| File | Focus |
+| ---- | ----- |
+| `auth/auth.service.spec.ts` | Login success, generic errors (unknown email / wrong password) |
+| `auth/guards/roles.guard.spec.ts` | `@Roles` allow/deny, missing user |
+| `students/students.service.spec.ts` | OPERADOR branch scope on create/list/findOne |
+| `stats/stats.service.spec.ts` | `$queryRaw` aggregation mapping and null fallbacks |
 
 ## Guidelines
 1. **Co-location File Pattern**: Unit test files must live next to the file they are testing using the `.spec.ts` naming convention (e.g., `auth.service.spec.ts` next to `auth.service.ts`).

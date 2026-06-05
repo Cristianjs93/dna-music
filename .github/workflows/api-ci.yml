@@ -1,5 +1,8 @@
 name: API CI
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 on:
   push:
     branches:
@@ -23,6 +26,9 @@ jobs:
   quality:
     name: Lint, build & test
     runs-on: ubuntu-latest
+    # prisma.config.ts requires DATABASE_URL to load; generate does not connect to the DB.
+    env:
+      DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/ci?schema=public
     defaults:
       run:
         working-directory: api
@@ -51,4 +57,4 @@ jobs:
         run: npm run build
 
       - name: Unit tests
-        run: npm run test -- --passWithNoTests
+        run: npm run test

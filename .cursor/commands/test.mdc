@@ -8,8 +8,7 @@ Runs automated tests for the NestJS backend API.
 
 From the `api/` directory:
 
-- **Unit tests**: `npm run test`
-- **Unit tests (CI parity, no specs yet)**: `npm run test -- --passWithNoTests`
+- **Unit tests**: `npm run test` (auth, roles guard, students scope, stats)
 - **Coverage**: `npm run test:cov`
 - **E2E** (local only, not in CI): `npm run test:e2e`
 
@@ -18,7 +17,7 @@ From the `api/` directory:
 `.github/workflows/api-ci.yml` runs on push/PR to `main` when `api/**` changes:
 
 ```text
-db:generate → lint → build → test --passWithNoTests
+db:generate → lint → build → test
 ```
 
 No database connection is required for the CI test job.

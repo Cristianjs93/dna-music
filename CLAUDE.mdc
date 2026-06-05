@@ -23,6 +23,7 @@ Welcome to the DNA Music ERP Mini-App repository. This project is a monorepo spl
 | Stats (`GET /api/stats`) — Prisma `groupBy` aggregates — ADMIN | Done |
 | Remote DB (Neon) + GitHub Actions DB workflow | Done |
 | API CI (lint, build, test) | Done |
+| Unit tests (auth, RBAC, students scope, stats) | Done |
 | React frontend | Planned |
 | API / Web hosting deploy | Planned |
 

@@ -123,9 +123,20 @@ npm run start:dev    # watch mode
 npm run build        # compile to dist/
 npm run start:prod   # run compiled app
 npm run lint         # ESLint
-npm run test         # unit tests
-npm run test:e2e     # end-to-end tests
+npm run test         # unit tests (auth, RBAC guard, student scope, stats)
+npm run test:e2e     # end-to-end tests (local only; not in CI yet)
 ```
+
+### Unit tests
+
+Co-located `*.spec.ts` files next to services/guards. Jest config: `jest.config.ts` + `tsconfig.jest.json`.
+
+| Area | File | What is covered |
+| ---- | ---- | --------------- |
+| Auth | `auth/auth.service.spec.ts` | Valid login, generic `Invalid credentials` |
+| RBAC | `auth/guards/roles.guard.spec.ts` | Role allow/deny |
+| Students | `students/students.service.spec.ts` | OPERADOR branch scoping |
+| Stats | `stats/stats.service.spec.ts` | Raw SQL aggregation response |
 
 ## Project layout
 

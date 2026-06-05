@@ -9,12 +9,17 @@
 
 | Workflow | Path | Triggers on | Steps |
 | -------- | ---- | ----------- | ----- |
-| **API CI** | `.github/workflows/api-ci.yml` | Push/PR when `api/**` changes; `workflow_dispatch` | `npm ci` → `db:generate` → `lint` → `build` → `test --passWithNoTests` |
+| **API CI** | `.github/workflows/api-ci.yml` | Push/PR when `api/**` changes; `workflow_dispatch` | `npm ci` → `db:generate` → `lint` → `build` → `test` (uses a **placeholder** `DATABASE_URL` only so `prisma.config.ts` loads; no DB connection) |
 | **Database setup** | `.github/workflows/db-setup.yml` | Push when `api/prisma/**`, `prisma.config.ts`, or API `package*.json` change; `workflow_dispatch` | `npm ci` → `db:generate` → `db:migrate:deploy` → `db:seed` |
 
 ## Secrets
 
-- Repository secret **`DATABASE_URL`**: direct Neon connection string (not pooler), with `?sslmode=require`. Required only for **Database setup**.
+- Repository secret **`DATABASE_URL`**: direct Neon connection string (not pooler), with `?sslmode=require`. Required only for **Database setup**. If missing, `db-setup.yml` fails at the verify step with an explicit error.
+
+## Node.js version vs Actions deprecation warning
+
+- **App / npm / Prisma**: Node **24.16.0** via `actions/setup-node` (`node-version: '24.16.0'`).
+- **Deprecation warning** (`Node.js 20 actions are deprecated`): refers to the **internal runtime** of `actions/checkout@v4` and `actions/setup-node@v4` on GitHub's side — not your project Node version. Workflows set `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true` to opt into Node 24 for those actions.
 - Never commit secrets; agents must not read or write `api/.env`.
 
 ## Agent expectations
@@ -28,7 +33,7 @@
 
 ```bash
 # Same as API CI (from api/)
-npm ci && npm run db:generate && npm run lint && npm run build && npm run test -- --passWithNoTests
+npm ci && npm run db:generate && npm run lint && npm run build && npm run test
 
 # Same as Database setup (from api/)
 npm run db:setup   # generate + migrate deploy + seed

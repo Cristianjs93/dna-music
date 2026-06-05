@@ -1,5 +1,8 @@
 name: Database setup
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 on:
   push:
     branches:
@@ -20,6 +23,8 @@ jobs:
   migrate-and-seed:
     name: Migrate & seed (Neon)
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
     defaults:
       run:
         working-directory: api
@@ -38,15 +43,24 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Verify DATABASE_URL secret
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::DATABASE_URL repository secret is missing. Add it under Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+          if [[ "$DATABASE_URL" != *"sslmode=require"* ]]; then
+            echo "::warning::Neon URLs should include ?sslmode=require"
+          fi
+          if [[ "$DATABASE_URL" == *"-pooler"* ]]; then
+            echo "::warning::Use Neon's direct connection URL for migrations, not the pooler host."
+          fi
+
       - name: Generate Prisma client
         run: npm run db:generate
 
       - name: Apply migrations
         run: npm run db:migrate:deploy
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - name: Seed database
         run: npm run db:seed
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}

@@ -7,6 +7,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { UsersModule } from './users/users.module';
 import { HeadquartersModule } from './headquarters/headquarters.module';
 import { StudentsModule } from './students/students.module';
+import { StatsModule } from './stats/stats.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { StudentsModule } from './students/students.module';
     UsersModule,
     HeadquartersModule,
     StudentsModule,
+    StatsModule,
   ],
   controllers: [],
   providers: [

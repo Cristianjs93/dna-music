@@ -6,7 +6,7 @@ All routes are prefixed with `/api`. Interactive documentation is available at `
 
 ## Requirements
 
-- Node.js 20+
+- Node.js 24.16 (`nvm use` from repo root reads `.nvmrc`)
 - PostgreSQL
 - npm
 
@@ -31,6 +31,37 @@ Swagger UI: `http://localhost:3000/api/docs`
 | `DATABASE_URL`   | PostgreSQL connection string         | `postgresql://postgres:postgres@localhost:5432/dna_music?schema=public` |
 | `JWT_SECRET`     | Secret for JWT signing               | `change-me-in-production-use-long-random-string`     |
 | `JWT_EXPIRES_IN` | Token lifetime                       | `1h`                                                 |
+| `CORS_ORIGINS`   | Allowed browser origins              | `http://localhost:5173,http://localhost:3000`        |
+
+## GitHub Actions
+
+Automated pipelines live in `.github/workflows/`. They use Node **24.16.0** (see repo root `.nvmrc`).
+
+### API CI (`api-ci.yml`)
+
+Runs on **push** and **pull requests** to `main` when files under `api/` change.
+
+```text
+npm ci → db:generate → lint → build → test (--passWithNoTests)
+```
+
+No database connection is required for this job.
+
+### Database setup (`db-setup.yml`)
+
+Runs on **push** to `main` when Prisma schema, migrations, `prisma.config.ts`, or API `package*.json` change. Can also be started manually from the Actions tab.
+
+```text
+npm ci → db:generate → db:migrate:deploy → db:seed
+```
+
+Requires the **`DATABASE_URL`** repository secret (direct Neon connection string with `?sslmode=require`). The seed script uses **upserts**, so re-running it on deploy is safe.
+
+Locally, the same sequence is available as:
+
+```bash
+npm run db:setup
+```
 
 ## Database scripts
 
@@ -132,4 +163,4 @@ Users, branches, and students support soft delete via `deletedAt`.
 | `GET /api/stats`   | Planned     |
 | Swagger            | Done        |
 
-See the root [README](../README.md) for the full monorepo overview and deployment notes.
+See the root [README](../README.md) for the monorepo overview, deployment URLs, and CI/CD setup (GitHub secrets).

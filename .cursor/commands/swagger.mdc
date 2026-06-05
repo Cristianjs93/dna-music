@@ -8,4 +8,6 @@ The Swagger documentation module is compiled dynamically at application runtime 
 - **Default Endpoint**: Upon backend startup, access via web browser at `http://localhost:3000/api/docs`.
 
 ## Code Generation Standard
-When creating endpoints, leverage NestJS `@nestjs/swagger` decorators (`@ApiTags`, `@ApiOperation`, `@ApiResponse`, `@ApiBearerAuth`) to document schemas automatically.
+
+- Swagger setup: `api/src/config/swagger.config.ts` (invoked from `main.ts`).
+- When creating endpoints, use `@nestjs/swagger` decorators (`@ApiTags`, `@ApiOperation`, `@ApiResponse`, `@ApiBearerAuth`) on controllers and `@ApiProperty` on DTOs.

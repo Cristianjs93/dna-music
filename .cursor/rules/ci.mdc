@@ -1,0 +1,35 @@
+# Rule: CI/CD & Remote Database
+
+## Runtime
+
+- **Node.js**: `24.16.0` — pinned in repo root `.nvmrc` and `api/package.json` `engines`.
+- **Remote database**: PostgreSQL on **Neon** (production/staging). Local dev may use local Postgres or the same Neon URL in `api/.env` (never commit `.env`).
+
+## GitHub Actions (branch `main`)
+
+| Workflow | Path | Triggers on | Steps |
+| -------- | ---- | ----------- | ----- |
+| **API CI** | `.github/workflows/api-ci.yml` | Push/PR when `api/**` changes; `workflow_dispatch` | `npm ci` → `db:generate` → `lint` → `build` → `test --passWithNoTests` |
+| **Database setup** | `.github/workflows/db-setup.yml` | Push when `api/prisma/**`, `prisma.config.ts`, or API `package*.json` change; `workflow_dispatch` | `npm ci` → `db:generate` → `db:migrate:deploy` → `db:seed` |
+
+## Secrets
+
+- Repository secret **`DATABASE_URL`**: direct Neon connection string (not pooler), with `?sslmode=require`. Required only for **Database setup**.
+- Never commit secrets; agents must not read or write `api/.env`.
+
+## Agent expectations
+
+1. After changing `api/src/**`, local `npm run lint` and `npm run build` must pass — same checks as API CI.
+2. After changing `api/prisma/schema.prisma` or adding migrations, remind the user that **Database setup** will run on push (or they can trigger it manually in Actions).
+3. Seed uses **upserts** — safe to re-run in CI; do not switch to destructive inserts without discussion.
+4. E2E tests (`npm run test:e2e`) are **not** in CI yet; `app.e2e-spec.ts` is still boilerplate.
+
+## Local equivalents
+
+```bash
+# Same as API CI (from api/)
+npm ci && npm run db:generate && npm run lint && npm run build && npm run test -- --passWithNoTests
+
+# Same as Database setup (from api/)
+npm run db:setup   # generate + migrate deploy + seed
+```

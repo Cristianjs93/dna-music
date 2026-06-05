@@ -1,0 +1,52 @@
+name: Database setup
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'api/prisma/**'
+      - 'api/prisma.config.ts'
+      - 'api/package.json'
+      - 'api/package-lock.json'
+      - '.github/workflows/db-setup.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: db-setup-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  migrate-and-seed:
+    name: Migrate & seed (Neon)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.16.0'
+          cache: 'npm'
+          cache-dependency-path: api/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npm run db:generate
+
+      - name: Apply migrations
+        run: npm run db:migrate:deploy
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Seed database
+        run: npm run db:seed
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}

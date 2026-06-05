@@ -1,9 +1,28 @@
 # Command: Development Backend API
 
 ## Purpose
+
 Starts the NestJS backend application in development mode with watch tools enabled.
 
+## Prerequisites
+
+- Node.js **24.16.0** (`nvm use` at repo root)
+- `api/.env` configured (copy from `api/.env.example`)
+- Database reachable (`DATABASE_URL`) and migrations applied
+
 ## Execution
-From the root directory, run:
+
+From the repo root:
+
 ```bash
+nvm use
 cd api && npm run start:dev
+```
+
+API: `http://localhost:3000/api`  
+Swagger: `http://localhost:3000/api/docs`
+
+## Related
+
+- DB setup: `.cursor/commands/db-seed.mdc`
+- CI checks before push: `.cursor/rules/ci.mdc`

@@ -2,31 +2,44 @@
 
 Welcome to the DNA Music ERP Mini-App repository. This project is a monorepo split into a NestJS backend and a React frontend.
 
-## Repository Structure & Context Maps
+## Repository structure & context maps
 
-- `api/` → Backend service (NestJS + TypeScript + Prisma + PostgreSQL)
-- `web/` → Frontend application (React + TypeScript)
+- `api/` → Backend (NestJS + TypeScript + Prisma + PostgreSQL)
+- `web/` → Frontend (React + TypeScript — in progress)
+- `.github/workflows/` → GitHub Actions (API CI + remote DB migrate/seed)
 - `.cursor/rules/` → Granular AI prompt instructions and constraints
+- `.nvmrc` → Node `24.16.0`
 
-## Current Backend State
+## Current backend state
 
-| Area                                       | Status  |
-| ------------------------------------------ | ------- |
-| Prisma schema (User, Headquarter, Student) | Done    |
-| Users CRUD (`/api/users`)                  | Done    |
-| Auth: login + JWT guard (`/api/auth`)      | Done    |
-| Role-based guards (`@Roles`, `RolesGuard`) | Planned |
-| Headquarters, Students, Stats modules      | Planned |
-| React frontend                             | Planned |
+| Area | Status |
+| ---- | ------ |
+| Prisma schema (User, Headquarter, Student) | Done |
+| Users CRUD (`/api/users`) + RBAC | Done |
+| Auth: login + JWT + `RolesGuard` | Done |
+| Security: helmet, CORS, throttling, timing-safe login | Done |
+| Headquarters CRUD (`/api/headquarters`) — ADMIN | Done |
+| Students CRUD (`/api/students`) — branch scope for OPERADOR | Done |
+| Stats (`GET /api/stats`) — Prisma `groupBy` aggregates — ADMIN | Done |
+| Remote DB (Neon) + GitHub Actions DB workflow | Done |
+| API CI (lint, build, test) | Done |
+| React frontend | Planned |
+| API / Web hosting deploy | Planned |
 
 ### Auth decisions
 
 - **Login** — `POST /api/auth/login` (public). Returns JWT + user profile.
 - **No public register** — users are provisioned by ADMIN via `POST /api/users`.
-- **Global guard** — `JwtAuthGuard` protects all routes unless marked `@Public()`.
-- **Security** — generic login errors, bcrypt (12 rounds), dummy hash on unknown email.
+- **Global guards** — `JwtAuthGuard` then `RolesGuard`; use `@Public()` and `@Roles(Role.ADMIN)` as needed.
+- **Security** — generic login errors, bcrypt (12 rounds), dummy hash on unknown email, single DB query on login.
 
-## Global Orchestration Scripts
+### Database & CI
+
+- **Production DB**: Neon PostgreSQL; `DATABASE_URL` in GitHub secret (not in repo).
+- **`db-setup.yml`**: on Prisma-related pushes to `main` → `migrate deploy` + `seed` (upserts).
+- **`api-ci.yml`**: on `api/**` push/PR → lint, build, `test --passWithNoTests`.
+
+## Global orchestration scripts
 
 Read execution guidelines under `.cursor/commands/`:
 
@@ -36,11 +49,12 @@ Read execution guidelines under `.cursor/commands/`:
 - **Swagger**: `.cursor/commands/swagger.mdc`
 - **Database Seed**: `.cursor/commands/db-seed.mdc`
 
-## AI Alignment & Modular Rules
+## AI alignment & modular rules
 
 Read and adhere to `.cursor/rules/` before writing code:
 
 - **Git & Conventional Commits**: `.cursor/rules/commit.mdc`
+- **CI/CD & remote DB**: `.cursor/rules/ci.mdc`
 - **Security & Auth**: `.cursor/rules/security.mdc`
 - **Backend Architecture**: `.cursor/rules/api.mdc`
 - **Frontend State & Roles**: `.cursor/rules/web.mdc`
@@ -48,15 +62,16 @@ Read and adhere to `.cursor/rules/` before writing code:
 - **Linting & Formatting**: `.cursor/rules/linter.mdc`
 - **Code Style**: `.cursor/rules/code-style.mdc`
 
-### During Development
+### During development
 
 1. Follow each app's architecture and existing conventions.
 2. Keep TypeScript strict; avoid `any`.
 3. Run relevant tests for the code you change.
-4. Use shared utilities (`isDefined`, `domainException`, `rethrowPrismaKnownError`) where the project specifies.
+4. Use shared utilities (`domainException`, `rethrowPrismaKnownError`) where the project specifies.
+5. Use Node `24.16.0` (`nvm use`).
 
-### After Changes
+### After changes
 
-1. Run quality checks (`npm run lint` in `api/` or `web/`).
-2. Verify builds where applicable (`npm run build`).
-3. Update README and `.cursor` rules if behavior or API contracts change.
+1. Run quality checks (`npm run lint`, `npm run build` in `api/` or `web/`).
+2. If Prisma schema/migrations changed, note that `db-setup.yml` will run on push to `main`.
+3. Update README and `.cursor` rules if behavior, API contracts, or CI change.

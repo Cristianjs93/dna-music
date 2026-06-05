@@ -1,5 +1,10 @@
 # Rule: NestJS Backend Standards
 
+## Runtime & tooling
+
+- **Node.js** `24.16.0` — use `nvm use` at repo root (`.nvmrc`).
+- **CI**: see `.cursor/rules/ci.mdc` for GitHub Actions (`api-ci.yml`, `db-setup.yml`).
+
 ## Import aliases (`api/tsconfig.json`)
 
 - `#/*` → `src/*` (NestJS modules)
@@ -32,6 +37,9 @@
 - **JWT payload** — `sub`, `email`, `role`, `headquarterId` (used later for OPERATOR scoping).
 - **Role guard** — `RolesGuard` is a global `APP_GUARD` (runs after `JwtAuthGuard`). Use `@Roles(Role.ADMIN)` on controllers or handlers. Endpoints without `@Roles` are open to any authenticated user; enforce branch scope in services for OPERADOR.
 - **Users** — all `/api/users` routes are `@Roles(ADMIN)` except `PATCH /:id`, where OPERADOR may update only their own `name` and `email` (no password, role, or headquarter changes).
+- **Headquarters** — entire controller is `@Roles(ADMIN)`.
+- **Students** — no class-level `@Roles`; service filters by `headquarterId` for OPERADOR.
+- **Stats** — `GET /api/stats` is `@Roles(ADMIN)`; use Prisma `groupBy` aggregates only.
 
 ## Business Logic & Database (Prisma)
 
@@ -41,11 +49,11 @@
    - `OPERADOR` is strictly bound to data belonging to their assigned `headquarterId`. Ensure contextual multi-tenancy filters are applied dynamically in the services.
 3. **Data Lifecycle**: Implement Soft Delete mechanics where reasonable (retaining rows with a `deletedAt` timestamp instead of physically removing them from PostgreSQL).
 4. **Input Validation**: Enforce strict DTO validation using `class-validator` and `class-transformer`.
-5. **Database Seeds**: Initial data lives in `api/prisma/seed.ts`. Run via `npm run db:seed` (see `.cursor/commands/db-seed`). Passwords must be bcrypt-hashed in seed, never stored in plain text.
+5. **Database Seeds**: Initial data lives in `api/prisma/seed.ts`. Run via `npm run db:seed` (see `.cursor/commands/db-seed`). Uses upserts — safe to re-run. Remote deploy: GitHub workflow `db-setup.yml` runs `db:migrate:deploy` + `db:seed` with secret `DATABASE_URL`. Passwords must be bcrypt-hashed in seed, never stored in plain text.
 
 ## OpenAPI / Swagger
 
-- Setup in `#util/swagger/swagger.setup.ts`, invoked from `main.ts`.
+- Setup in `src/config/swagger.config.ts`, invoked from `main.ts`.
 - UI: `http://localhost:3000/api/docs` (with global prefix `api`).
 - Use `.addBearerAuth()` in the document builder; decorate protected controllers with `@ApiBearerAuth()`.
 - Decorate controllers: `@ApiTags`, `@ApiOperation`, `@ApiOkResponse`, `@ApiParam`, etc.

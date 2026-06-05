@@ -1,9 +1,20 @@
 # Command: Development Frontend Web
 
 ## Purpose
+
 Starts the React frontend application in development mode.
 
+## Prerequisites
+
+- Node.js **24.16.0** (`nvm use` at repo root)
+- Backend running (see `.cursor/commands/dev-api.mdc`)
+- Set `CORS_ORIGINS` in `api/.env` to include the Vite dev URL (e.g. `http://localhost:5173`)
+
 ## Execution
-From the root directory, run:
+
+From the repo root:
+
 ```bash
+nvm use
 cd web && npm run dev
+```

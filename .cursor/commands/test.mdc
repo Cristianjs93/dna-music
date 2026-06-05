@@ -1,12 +1,29 @@
 # Command: Test Suite Execution
 
 ## Purpose
+
 Runs automated tests for the NestJS backend API.
 
-## Execution Options
+## Execution options
+
 From the `api/` directory:
-- **Run Unit Tests**: `npm run test`
-- **Run Tests with Coverage**: `npm run test:cov`
+
+- **Unit tests**: `npm run test`
+- **Unit tests (CI parity, no specs yet)**: `npm run test -- --passWithNoTests`
+- **Coverage**: `npm run test:cov`
+- **E2E** (local only, not in CI): `npm run test:e2e`
+
+## CI
+
+`.github/workflows/api-ci.yml` runs on push/PR to `main` when `api/**` changes:
+
+```text
+db:generate → lint → build → test --passWithNoTests
+```
+
+No database connection is required for the CI test job.
 
 ## Constraints
-- Ensure database mock states or test databases are configured correctly if executing integrations, preventing overrides to development seed databases[cite: 132].
+
+- Mock Prisma and external deps in unit tests; do not hit production Neon from tests.
+- E2E requires a valid `DATABASE_URL` and a real test module — replace boilerplate in `test/app.e2e-spec.ts` before relying on e2e in CI.

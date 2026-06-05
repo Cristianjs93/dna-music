@@ -12,6 +12,7 @@
       "framework": "react"
     },
     "preferredPackageManger": "npm",
+    "nodeVersion": "24.16.0",
     "rulesDirectory": ".cursor/rules",
     "enforceStrictTyping": true,
     "permissions": {
@@ -20,6 +21,6 @@
           "Write(**/.env)"
         ]
       },
-    "include": ["api/**", "web/**", "CLAUDE.md", "README.md", ".cursor/**"],
+    "include": ["api/**", "web/**", ".github/workflows/**", "CLAUDE.md", "README.md", ".nvmrc", ".cursor/**"],
     "exclude": ["**/node_modules/**", "**/dist/**", "**/coverage/**", ".git/**"]
 }

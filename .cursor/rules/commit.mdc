@@ -8,7 +8,8 @@ We maintain a pristine, semantic, and highly descriptive commit history. A singl
    - `feat: ...` for new features (e.g., adding an endpoint, building a form).
    - `fix: ...` for bug fixes (e.g., fixing a broken JWT validation).
    - `docs: ...` for documentation changes only (e.g., updating README or analysis files).
-   - `chore: ...` for repository maintenance, dependencies, or config tweaks.
+   - `chore: ...` for repository maintenance, dependencies, CI workflows, or config tweaks.
+   - `ci: ...` for GitHub Actions workflow changes only (optional alias of `chore`).
    - `refactor: ...` for code changes that neither fix a bug nor add a feature.
    - `test: ...` for testing implementations and changes.
 

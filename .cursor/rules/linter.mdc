@@ -27,3 +27,4 @@ After **any** edit to source files, the agent MUST complete this checklist **bef
    - **Formatting**: Adhere to Prettier styles (trailing commas, semi-colons, single quotes where standardized per directory context).
 3. **Prisma scripts**: Files under `api/prisma/*.ts` are TypeScript; validate with `ReadLints` after edits. Run `npm run db:generate` if the schema changed before judging Prisma client types.
 4. **Pre-commit routine**: Prior to pushing code, ensure codebases pass `npm run lint` within respective folders.
+5. **CI parity**: Push to `main` triggers `.github/workflows/api-ci.yml` for `api/**` changes (`lint` → `build` → `test`). Match that locally before pushing backend changes. Node version in CI: `24.16.0`.

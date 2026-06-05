@@ -6,8 +6,8 @@ Loads initial data required by the technical test PDF into PostgreSQL.
 
 ## Prerequisites
 
-1. PostgreSQL running and `api/.env` configured.
-2. Migrations applied: `cd api && npm run db:migrate` (or `npm run db:migrate:deploy` in CI).
+1. `api/.env` configured with `DATABASE_URL` (local Postgres or remote Neon).
+2. Migrations applied: `npm run db:migrate` (dev) or `npm run db:migrate:deploy` (production/CI).
 
 ## Execution
 
@@ -21,4 +21,26 @@ cd api && npm run db:seed
 cd api && npm run db:setup
 ```
 
-Runs: generate → migrate deploy → seed.
+Runs: `db:generate` → `db:migrate:deploy` → `db:seed`.
+
+## Remote / CI (GitHub Actions)
+
+Workflow: `.github/workflows/db-setup.yml`
+
+- **Triggers**: push to `main` when Prisma schema, migrations, or API lockfile change; or manual **Run workflow**.
+- **Requires**: repository secret `DATABASE_URL` (direct Neon URL with `?sslmode=require`).
+- **Steps**: same as `db:setup` against the remote database.
+
+Seed uses **upserts** — re-running on deploy is safe.
+
+## Data loaded (`prisma/seed.ts`)
+
+| Entity | Detail |
+| ------ | ------ |
+| Branches | Bogotá, Medellín, Cali (active) |
+| ADMIN | `admin@dnamusic.co` / `Admin123!` |
+| OPERATOR Bogotá | `operador.bog@dnamusic.co` / `Oper123!` |
+| OPERATOR Medellín | `operador.med@dnamusic.co` / `Oper123!` |
+| Students | Sample records — ACTIVO, INACTIVO, RETIRADO across branches |
+
+Passwords are bcrypt-hashed in seed; never store plain text in the database.

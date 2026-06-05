@@ -1,98 +1,119 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# DNA Music API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+NestJS backend for the DNA Music technical assessment. It exposes a REST API to manage users, branches, and students with role-based access (ADMIN / OPERATOR).
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+All routes are prefixed with `/api`. Interactive documentation is available at `/api/docs` when the server is running.
 
-## Description
+## Requirements
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- Node.js 20+
+- PostgreSQL
+- npm
 
-## Project setup
+## Quick start
 
 ```bash
-$ npm install
+npm install
+cp .env.example .env
+# Set DATABASE_URL in .env
+
+npm run db:setup    # generate client + migrate + seed
+npm run start:dev   # http://localhost:3000
 ```
 
-## Compile and run the project
+Swagger UI: `http://localhost:3000/api/docs`
+
+## Environment variables
+
+| Variable       | Description                          | Example                                              |
+| -------------- | ------------------------------------ | ---------------------------------------------------- |
+| `PORT`         | HTTP port                            | `3000`                                               |
+| `DATABASE_URL` | PostgreSQL connection string         | `postgresql://postgres:postgres@localhost:5432/dna_music?schema=public` |
+| `JWT_SECRET`   | Secret for JWT signing (auth module) | `random-string-secret`                               |
+
+## Database scripts
+
+| Command                  | Description                              |
+| ------------------------ | ---------------------------------------- |
+| `npm run db:generate`    | Generate Prisma client                   |
+| `npm run db:migrate`     | Run migrations (dev)                     |
+| `npm run db:migrate:deploy` | Apply migrations (production)         |
+| `npm run db:seed`        | Load sample data                         |
+| `npm run db:setup`       | Generate + migrate + seed in one step    |
+| `npm run db:reset`       | Reset database and re-run migrations     |
+| `npm run db:studio`      | Open Prisma Studio                       |
+
+## Seed data
+
+Running `npm run db:seed` creates:
+
+- 3 branches: Bogotá, Medellín, Cali
+- 1 admin user and 2 operator users
+- 6 sample students
+
+| Role     | Email                    | Password  |
+| -------- | ------------------------ | --------- |
+| ADMIN    | admin@dnamusic.co        | Admin123! |
+| OPERATOR | operador.bog@dnamusic.co | Oper123!  |
+| OPERATOR | operador.med@dnamusic.co | Oper123!  |
+
+## Available endpoints
+
+### Users (`/api/users`)
+
+| Method   | Path            | Description              |
+| -------- | --------------- | ------------------------ |
+| `POST`   | `/api/users`    | Create a user            |
+| `GET`    | `/api/users`    | List active users        |
+| `GET`    | `/api/users/:id`| Get user by ID           |
+| `PATCH`  | `/api/users/:id`| Update a user            |
+| `DELETE` | `/api/users/:id`| Soft-delete a user       |
+
+More modules (auth, branches, students, stats) will be added as development continues. Check Swagger for the latest contract.
+
+## Development commands
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+npm run start:dev    # watch mode
+npm run build        # compile to dist/
+npm run start:prod   # run compiled app
+npm run lint         # ESLint
+npm run test         # unit tests
+npm run test:e2e     # end-to-end tests
 ```
 
-## Run tests
+## Project layout
 
-```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+```text
+src/
+├── prisma/           # Prisma module (global DB access)
+├── users/            # Users CRUD module
+├── util/             # Shared helpers (errors, swagger, parsing)
+├── app.module.ts
+└── main.ts
+prisma/
+├── schema.prisma     # Data model
+├── migrations/       # SQL migrations
+└── seed.ts           # Sample data
 ```
 
-## Deployment
+## Data model (overview)
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+- **User** — ADMIN or OPERATOR; operators are linked to one branch
+- **Headquarter** — branch / campus (Bogotá, Medellín, Cali)
+- **Student** — belongs to a branch; statuses include active, inactive, graduated, etc.
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+Users, branches, and students support soft delete via `deletedAt`.
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
+## Implementation status
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+| Feature            | Status      |
+| ------------------ | ----------- |
+| Users CRUD         | Done        |
+| Swagger            | Done        |
+| JWT auth + guards  | Planned     |
+| Branches CRUD      | Planned     |
+| Students CRUD      | Planned     |
+| `GET /api/stats`   | Planned     |
 
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+See the root [README](../README.md) for the full monorepo overview and deployment notes.

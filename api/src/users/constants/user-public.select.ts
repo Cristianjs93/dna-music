@@ -8,6 +8,7 @@ export const userPublicSelect = {
   headquarterId: true,
   createdAt: true,
   updatedAt: true,
+  deletedAt: true,
   headquarter: {
     select: {
       id: true,

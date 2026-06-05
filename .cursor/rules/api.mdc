@@ -1,5 +1,16 @@
 # Rule: NestJS Backend Standards
 
+## Import aliases (`api/tsconfig.json`)
+
+- `#/*` → `src/*` (módulos NestJS)
+- `#generated/prisma` → cliente y tipos Prisma generados
+- `#util/*` → utilidades compartidas (`parse.utils`, `prisma-error.utils`, `domain-error.utils`)
+- `#db/*` → scripts en `prisma/*`
+
+## Error handling utilities
+
+- **Prisma errors** (`#util/prisma-error.utils`): wrap write operations in `try/catch` and call `rethrowPrismaKnownError(error, MESSAGES)` in the catch block. Maps P2002/P2025/P2003 to HTTP exceptions.
+
 ## Architectural Pattern
 
 - **Modular Design**: Every feature must have its own isolated module directory (e.g., `auth/`, `headquarters/`, `students/`). Each module should cleanly encapsulate its respective Controller, Service, and Prisma Data Access.

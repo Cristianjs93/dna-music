@@ -1,16 +1,14 @@
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Role, type Prisma } from '#generated/prisma';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '#/prisma/prisma.service';
-import { userPublicSelect, type UserPublic } from './constants/user-public.select';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { userPublicSelect, type UserPublic } from './constants/user-public.select';
+import { USER_DOMAIN_ERRORS, USER_PRISMA_ERRORS } from './constants/user-errors.constants';
 import { isDefined, nonEmptyStringOrElse, nonEmptyStringOrUndefined } from '#util/parse.utils';
+import { domainException } from '#util/errors/domain-error.utils.js';
+import { rethrowPrismaKnownError } from '#util/errors/prisma-error.utils.js';
 
 const SALT_ROUNDS = 12;
 
@@ -26,19 +24,20 @@ export class UsersService {
         data: {
           name: createUserDto.name,
           email: createUserDto.email,
-          password: await this.passwordHash(createUserDto.password),
+          password: await this.hashPassword(createUserDto.password),
           role: createUserDto.role,
           headquarterId: this.resolveHeadquarterId(createUserDto.role, createUserDto.headquarterId),
         },
         select: userPublicSelect,
       });
     } catch (error: unknown) {
-      this.handlePrismaError(error);
+      rethrowPrismaKnownError(error, USER_PRISMA_ERRORS);
     }
   }
 
   async findAll(): Promise<UserPublic[]> {
     return this.prisma.user.findMany({
+      where: { deletedAt: null },
       select: userPublicSelect,
       orderBy: { createdAt: 'desc' },
     });
@@ -51,7 +50,7 @@ export class UsersService {
     });
 
     if (!isDefined(user)) {
-      throw new NotFoundException(`User not found`);
+      throw domainException(USER_DOMAIN_ERRORS.userNotFound);
     }
 
     return user;
@@ -64,7 +63,7 @@ export class UsersService {
     });
 
     if (!isDefined(current)) {
-      throw new NotFoundException(`User not found`);
+      throw domainException(USER_DOMAIN_ERRORS.userNotFound);
     }
 
     const role = updateUserDto.role ?? current.role;
@@ -91,7 +90,7 @@ export class UsersService {
         select: userPublicSelect,
       });
     } catch (error: unknown) {
-      this.handlePrismaError(error);
+      rethrowPrismaKnownError(error, USER_PRISMA_ERRORS);
     }
   }
 
@@ -99,16 +98,17 @@ export class UsersService {
     await this.ensureUserExists(id);
 
     try {
-      return await this.prisma.user.delete({
+      return await this.prisma.user.update({
         where: { id },
+        data: { deletedAt: new Date() },
         select: userPublicSelect,
       });
     } catch (error: unknown) {
-      this.handlePrismaError(error);
+      rethrowPrismaKnownError(error, USER_PRISMA_ERRORS);
     }
   }
 
-  private passwordHash(password: string): Promise<string> {
+  private hashPassword(password: string): Promise<string> {
     return bcrypt.hash(password, SALT_ROUNDS);
   }
 
@@ -127,7 +127,7 @@ export class UsersService {
   private async validateHeadquarterAssignment(role: Role, headquarterId?: string): Promise<void> {
     if (role === Role.OPERADOR) {
       if (!isDefined(headquarterId)) {
-        throw new BadRequestException('OPERADOR users must have a headquarter assigned');
+        throw domainException(USER_DOMAIN_ERRORS.operatorRequiresHeadquarter);
       }
 
       const headquarter = await this.prisma.headquarter.findUnique({
@@ -136,18 +136,18 @@ export class UsersService {
       });
 
       if (!isDefined(headquarter)) {
-        throw new BadRequestException('Headquarter not found');
+        throw domainException(USER_DOMAIN_ERRORS.headquarterNotFound);
       }
 
       if (!headquarter.isActive) {
-        throw new BadRequestException('Headquarter is not active');
+        throw domainException(USER_DOMAIN_ERRORS.headquarterInactive);
       }
 
       return;
     }
 
     if (isDefined(headquarterId)) {
-      throw new BadRequestException('ADMIN users must not have a headquarter assigned');
+      throw domainException(USER_DOMAIN_ERRORS.adminMustNotHaveHeadquarter);
     }
   }
 
@@ -158,19 +158,7 @@ export class UsersService {
     });
 
     if (!isDefined(user)) {
-      throw new NotFoundException(`user not found`);
+      throw domainException(USER_DOMAIN_ERRORS.userNotFound);
     }
-  }
-
-  private handlePrismaError(error: unknown): never {
-    if (typeof error === 'object' && error !== null && 'code' in error && error.code === 'P2002') {
-      throw new ConflictException('email already registered');
-    }
-
-    if (typeof error === 'object' && error !== null && 'code' in error && error.code === 'P2025') {
-      throw new NotFoundException('user not found');
-    }
-
-    throw error;
   }
 }

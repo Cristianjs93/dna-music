@@ -82,6 +82,7 @@ export class UsersService {
       throw domainException(USER_DOMAIN_ERRORS.userNotFound);
     }
 
+    this.logger.error(`Found user with id=${id}`);
     return user;
   }
 
@@ -229,7 +230,10 @@ export class UsersService {
     });
 
     if (!isDefined(user)) {
+      this.logger.error(`User not found id=${id}`);
       throw domainException(USER_DOMAIN_ERRORS.userNotFound);
     }
+    this.logger.error(`Found user with id=${id}. Proceeding to soft-delete.`);
+    return;
   }
 }

@@ -1,7 +1,12 @@
 import type { HttpException } from '@nestjs/common';
-import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 
-export type DomainErrorKind = 'BadRequest' | 'NotFound' | 'Conflict';
+export type DomainErrorKind = 'BadRequest' | 'NotFound' | 'Conflict' | 'Forbidden';
 
 export interface DomainErrorDefinition {
   kind: DomainErrorKind;
@@ -19,6 +24,8 @@ export function domainException(error: DomainErrorDefinition): HttpException {
       return new NotFoundException(error.message);
     case 'Conflict':
       return new ConflictException(error.message);
+    case 'Forbidden':
+      return new ForbiddenException(error.message);
     default:
       return new BadRequestException(error.message);
   }

@@ -1,14 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Role } from '#generated/prisma';
-import {
-  IsEmail,
-  IsEnum,
-  IsOptional,
-  IsString,
-  IsUUID,
-  MaxLength,
-  MinLength,
-} from 'class-validator';
+import { IsEmail, IsEnum, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 
 export class UpdateUserDto {
   @ApiPropertyOptional({ example: 'Operador Bogotá', maxLength: 150 })
@@ -23,14 +15,7 @@ export class UpdateUserDto {
   @MaxLength(320)
   email?: string;
 
-  @ApiPropertyOptional({ example: 'Oper123!', minLength: 8, maxLength: 100 })
-  @IsOptional()
-  @IsString()
-  @MinLength(8)
-  @MaxLength(100)
-  password?: string;
-
-  @ApiPropertyOptional({ enum: Role, example: Role.OPERADOR })
+  @ApiPropertyOptional({ enum: Role, example: Role.OPERADOR, description: 'ADMIN only' })
   @IsOptional()
   @IsEnum(Role)
   role?: Role;
@@ -38,7 +23,7 @@ export class UpdateUserDto {
   @ApiPropertyOptional({
     format: 'uuid',
     nullable: true,
-    description: 'Headquarter UUID; null when role is ADMIN',
+    description: 'Headquarter UUID; null when role is ADMIN. ADMIN only.',
   })
   @IsOptional()
   @IsUUID()

@@ -8,7 +8,7 @@ export function setupSwagger(app: INestApplication): void {
     .setVersion('1.0')
     .addBearerAuth()
     .addTag('auth', 'Authentication')
-    .addTag('users', 'User management')
+    .addTag('users', 'User management (ADMIN; self-update for OPERADOR)')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

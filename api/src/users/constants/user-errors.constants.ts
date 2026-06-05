@@ -27,4 +27,8 @@ export const USER_DOMAIN_ERRORS = {
     kind: 'BadRequest',
     message: 'Headquarter is not active',
   } as const satisfies DomainErrorDefinition,
+  operatorMissingHeadquarter: {
+    kind: 'Forbidden',
+    message: 'OPERADOR users must have a headquarter assigned',
+  } as const satisfies DomainErrorDefinition,
 } as const;

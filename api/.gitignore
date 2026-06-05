@@ -36,3 +36,4 @@ coverage/
 # Generated files
 generated/
 **/generated/prisma
+.DS_Store

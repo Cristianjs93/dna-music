@@ -30,7 +30,8 @@
 - **Global JWT guard** — `JwtAuthGuard` is registered as `APP_GUARD`. Mark public routes with `@Public()`.
 - **Current user** — use `@CurrentUser()` to read the authenticated user on protected handlers.
 - **JWT payload** — `sub`, `email`, `role`, `headquarterId` (used later for OPERATOR scoping).
-- **Role guard (planned)** — `@Roles(Role.ADMIN)` + `RolesGuard` for admin-only routes such as user creation.
+- **Role guard** — `RolesGuard` is a global `APP_GUARD` (runs after `JwtAuthGuard`). Use `@Roles(Role.ADMIN)` on controllers or handlers. Endpoints without `@Roles` are open to any authenticated user; enforce branch scope in services for OPERADOR.
+- **Users** — all `/api/users` routes are `@Roles(ADMIN)` except `PATCH /:id`, where OPERADOR may update only their own `name` and `email` (no password, role, or headquarter changes).
 
 ## Business Logic & Database (Prisma)
 

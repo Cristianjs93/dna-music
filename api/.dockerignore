@@ -1,0 +1,55 @@
+# Dependencies and local artifacts
+node_modules
+dist
+generated
+coverage
+.next
+.nuxt
+
+# Environment variables and credentials (Security)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.id_rsa
+
+# Logs and debugging
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.npm
+.eslintcache
+
+# Version control and development tools
+.git
+.gitignore
+.gitattributes
+.github
+.gitlab
+.vscode
+.idea
+*.suo
+*.ntvs
+*.njsproj
+*.sln
+*.swp
+
+# Linter/formatter testing and configurations
+test
+**/*.spec.ts
+**/*.test.ts
+jest.config.ts
+tsconfig.jest.json
+.eslintrc*
+eslint.config.*
+.prettierrc*
+prettier.config.*
+.editorconfig
+
+# Documentation and meta-files
+README.md
+CHANGELOG.md
+LICENSE
+Docker*.sh

@@ -1,4 +1,4 @@
-export function stringOrNull(element: any): string | null {
+export function stringOrNull(element: unknown): string | null {
   return typeof element === 'string' ? element : null;
 }
 

@@ -32,11 +32,11 @@ async function bootstrap(): Promise<void> {
 
   setupSwagger(app);
 
-  const port = configService.get<string>('PORT', '3000');
-  await app.listen(port);
+  const port = Number(configService.get<string>('PORT', '3000'));
+  await app.listen(port, '0.0.0.0');
 
   const url = await app.getUrl();
   console.log(`Server is running on ${url}`);
   console.log(`Swagger docs: ${url}/api/docs`);
 }
-bootstrap();
+void bootstrap();

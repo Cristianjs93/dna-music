@@ -107,8 +107,9 @@ describe('StudentsService', () => {
     });
 
     it('requires headquarterId for ADMIN', async () => {
-      const { headquarterId: _, ...rest } = baseCreateDto;
-      const dto = rest as unknown as CreateStudentDto;
+      const dto = (({ headquarterId: _hq, ...rest }) => rest)(
+        baseCreateDto,
+      ) as unknown as CreateStudentDto;
 
       await expect(service.create(dto, admin)).rejects.toThrow(NotFoundException);
       await expect(service.create(dto, admin)).rejects.toThrow('Headquarter not found');

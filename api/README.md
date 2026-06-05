@@ -174,4 +174,16 @@ Users, branches, and students support soft delete via `deletedAt`.
 | `GET /api/stats`   | Planned     |
 | Swagger            | Done        |
 
-See the root [README](../README.md) for the monorepo overview, deployment URLs, and CI/CD setup (GitHub secrets).
+## Deployment (Render + Neon)
+
+The API runs as a Docker container on [Render](https://render.com) (free tier) and uses your **external Neon** `DATABASE_URL`. Migrations are handled by GitHub Actions (`db-setup.yml`), not at container startup.
+
+| Artifact | Purpose |
+| -------- | ------- |
+| `Dockerfile` | Multi-stage production image (Node 24 Alpine) |
+| `render.yaml` | Optional Render Blueprint |
+| `GET /api/health` | Liveness check for Render (`healthCheckPath`) |
+
+Full setup steps: root [README — Deployment](../README.md#deployment).
+
+See the root [README](../README.md) for deployment URLs and CI/CD secrets.

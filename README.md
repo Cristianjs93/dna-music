@@ -97,7 +97,8 @@ The seed also creates **3 branches** (Bogotá, Medellín, Cali) and **6 sample s
 | React frontend      | Pending           |
 | Remote database     | Neon (PostgreSQL) |
 | GitHub Actions CI   | Implemented       |
-| API / Web deploy    | Pending           |
+| API deploy (Render) | Ready to deploy   |
+| Web deploy          | Pending           |
 
 ## CI/CD (GitHub Actions)
 
@@ -121,6 +122,68 @@ Add in the repository: **Settings → Secrets and variables → Actions → New 
 The database workflow does **not** run on every API code change — only when schema, migrations, or related dependencies change. After editing Prisma, push to `main` or trigger the workflow manually.
 
 Check run status under the repository **Actions** tab.
+
+## Deployment
+
+### Database (done)
+
+PostgreSQL on **Neon**. Migrations and seed run via GitHub Actions (`db-setup.yml`) or locally with `npm run db:setup`.
+
+### API — Render (free tier)
+
+The API ships as a **Docker** image (`api/Dockerfile`) and targets [Render](https://render.com) free web services. Render connects to your existing Neon database through `DATABASE_URL` — no Postgres addon required on Render.
+
+**Why Render:** free tier, Docker support, HTTPS, env vars, auto-deploy from GitHub. Trade-off: the service sleeps after ~15 minutes of inactivity (cold start ~30–60s on first request).
+
+#### One-time setup
+
+1. Push this repo to GitHub (already done).
+2. Sign in at [dashboard.render.com](https://dashboard.render.com) (GitHub login).
+3. **New → Web Service** → connect repository `dna-music`.
+4. Settings:
+   | Field | Value |
+   | ----- | ----- |
+   | **Root Directory** | `api` |
+   | **Runtime** | Docker |
+   | **Instance type** | Free |
+   | **Health Check Path** | `/api/health` |
+5. **Environment variables** (same Neon URL you use locally; use the **pooled** URL for the running app if Neon provides one):
+
+   | Variable          | Value                                                                     |
+   | ----------------- | ------------------------------------------------------------------------- |
+   | `DATABASE_URL`    | Neon PostgreSQL URL (`?sslmode=require`)                                  |
+   | `JWT_SECRET`      | Long random string (not the example from `.env.example`)                  |
+   | `JWT_EXPIRES_IN`  | `1h`                                                                      |
+   | `CORS_ORIGINS`    | Frontend URL when ready; for Swagger-only testing use your Render API URL |
+   | `BODY_SIZE_LIMIT` | `100kb`                                                                   |
+   | `THROTTLE_TTL_MS` | `60000`                                                                   |
+   | `THROTTLE_LIMIT`  | `100`                                                                     |
+
+   `PORT` is set automatically by Render — do not override unless their docs require it.
+
+6. **Create Web Service** and wait for the Docker build (~3–5 min first time).
+
+Alternatively, import `api/render.yaml` via **New → Blueprint** (set root to `api`).
+
+#### Verify
+
+```bash
+curl https://<your-service>.onrender.com/api/health
+# {"status":"ok"}
+
+# Swagger
+open https://<your-service>.onrender.com/api/docs
+```
+
+Login: `admin@dnamusic.co` / `Admin123!` (seed data from Neon).
+
+#### Local Docker (optional)
+
+```bash
+cd api
+docker build -t dna-music-api .
+docker run --rm -p 3000:3000 --env-file .env dna-music-api
+```
 
 ## Deployment URLs
 

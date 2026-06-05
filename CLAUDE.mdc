@@ -25,7 +25,8 @@ Welcome to the DNA Music ERP Mini-App repository. This project is a monorepo spl
 | API CI (lint, build, test) | Done |
 | Unit tests (auth, RBAC, students scope, stats) | Done |
 | React frontend | Planned |
-| API / Web hosting deploy | Planned |
+| API deploy (Render Docker + Neon) | Ready (`api/Dockerfile`, `render.yaml`) |
+| Web hosting deploy | Planned |
 
 ### Auth decisions
 

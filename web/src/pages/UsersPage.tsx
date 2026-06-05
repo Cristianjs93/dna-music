@@ -1,74 +1,38 @@
 import { useState } from 'react';
-import { useForm, Controller } from 'react-hook-form';
-import { FilterMatchMode } from 'primereact/api';
-import { Button } from 'primereact/button';
 import { Column } from 'primereact/column';
 import { ConfirmDialog } from 'primereact/confirmdialog';
-import { DataTable, type DataTableFilterMeta } from 'primereact/datatable';
-import { Dialog } from 'primereact/dialog';
-import { FormField } from '@/components/common/FormField';
 import { PageHeader } from '@/components/common/PageHeader';
-import { TableSearchInput } from '@/components/common/TableSearchInput';
-import { DnaButton, DnaDropdown, DnaInputText, DnaPassword } from '@/components/ui';
-import { useUsers, type UserFormValues } from '@/hooks/useUsers';
-import type { Role, User } from '@/types/api.types';
+import { CrudDataTable } from '@/components/crud/CrudDataTable';
+import { createGlobalFilter } from '@/components/crud/tableFilters';
+import { TableActionsColumn } from '@/components/crud/TableActionsColumn';
+import { UserFormDialog } from '@/components/users/UserFormDialog';
+import { DnaButton } from '@/components/ui';
+import { useUsers } from '@/hooks/useUsers';
+import type { UserFormValues } from '@/hooks/users/user.types';
+import type { User } from '@/types/user.types';
 import { confirmDelete } from '@/utils/confirmDelete';
-import { validationMessages } from '@/utils/errorMessages';
 import { formatDate } from '@/utils/format';
 
-const roleOptions = [
-  { label: 'Administrador', value: 'ADMIN' as Role },
-  { label: 'Operador', value: 'OPERADOR' as Role },
-];
-
-const emptyFilters: DataTableFilterMeta = {
-  global: { value: null, matchMode: FilterMatchMode.CONTAINS },
-  name: { value: null, matchMode: FilterMatchMode.CONTAINS },
-  email: { value: null, matchMode: FilterMatchMode.CONTAINS },
-  role: { value: null, matchMode: FilterMatchMode.EQUALS },
+const emptyUserValues: UserFormValues = {
+  name: '',
+  email: '',
+  password: '',
+  role: 'OPERADOR',
+  headquarterId: null,
 };
 
-export default function UsersPage() {
-  const {
-    users,
-    activeHeadquarters,
-    loading,
-    saving,
-    saveUser,
-    removeUser,
-  } = useUsers();
+const userFilters = createGlobalFilter(['name', 'email', 'role']);
 
+export default function UsersPage() {
+  const { users, activeHeadquarters, loading, saving, saveUser, removeUser } = useUsers();
   const [dialogVisible, setDialogVisible] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [filters, setFilters] = useState<DataTableFilterMeta>(emptyFilters);
-  const [globalFilter, setGlobalFilter] = useState('');
-
-  const {
-    control,
-    register,
-    handleSubmit,
-    reset,
-    watch,
-    formState: { errors },
-  } = useForm<UserFormValues>({
-    defaultValues: {
-      name: '',
-      email: '',
-      password: '',
-      role: 'OPERADOR',
-      headquarterId: null,
-    },
-  });
-
-  const selectedRole = watch('role');
+  const [formValues, setFormValues] = useState<UserFormValues>(emptyUserValues);
 
   const openCreate = () => {
     setEditingUser(null);
-    reset({
-      name: '',
-      email: '',
-      password: '',
-      role: 'OPERADOR',
+    setFormValues({
+      ...emptyUserValues,
       headquarterId: activeHeadquarters[0]?.id ?? null,
     });
     setDialogVisible(true);
@@ -76,7 +40,7 @@ export default function UsersPage() {
 
   const openEdit = (user: User) => {
     setEditingUser(user);
-    reset({
+    setFormValues({
       name: user.name,
       email: user.email,
       password: '',
@@ -100,36 +64,6 @@ export default function UsersPage() {
     });
   };
 
-  const actionsTemplate = (user: User) => (
-    <div className="flex justify-center gap-2">
-      <Button
-        icon="pi pi-pencil"
-        rounded
-        text
-        severity="info"
-        onClick={() => openEdit(user)}
-        tooltip="Editar"
-      />
-      <Button
-        icon="pi pi-trash"
-        rounded
-        text
-        severity="danger"
-        onClick={() => handleDelete(user)}
-        tooltip="Eliminar"
-      />
-    </div>
-  );
-
-  const header = (
-    <div className="flex flex-wrap items-center justify-between gap-3">
-      <span className="text-lg font-semibold">Listado de usuarios</span>
-      <TableSearchInput value={globalFilter} onChange={setGlobalFilter} />
-    </div>
-  );
-
-  const formKey = editingUser?.id ?? 'create';
-
   return (
     <div>
       <ConfirmDialog />
@@ -137,31 +71,16 @@ export default function UsersPage() {
         title="Usuarios"
         subtitle="Gestión de cuentas internas y roles de acceso."
         action={
-          <DnaButton
-            variant="primary"
-            label="Nuevo usuario"
-            icon="pi pi-plus"
-            onClick={openCreate}
-          />
+          <DnaButton variant="primary" label="Nuevo usuario" icon="pi pi-plus" onClick={openCreate} />
         }
       />
-
-      <DataTable
+      <CrudDataTable
         value={users}
         loading={loading}
-        paginator
-        rows={10}
-        rowsPerPageOptions={[5, 10, 25]}
-        filters={filters}
-        filterDisplay="row"
-        globalFilterFields={['name', 'email', 'role']}
-        globalFilter={globalFilter}
-        onFilter={(e) => setFilters(e.filters)}
-        stripedRows
-        showGridlines
+        title="Listado de usuarios"
         emptyMessage="No hay usuarios registrados."
-        dataKey="id"
-        header={header}
+        globalFilterFields={['name', 'email', 'role']}
+        initialFilters={userFilters}
       >
         <Column field="name" header="Nombre" sortable filter filterPlaceholder="Buscar" />
         <Column field="email" header="Correo" sortable filter filterPlaceholder="Buscar" />
@@ -180,116 +99,22 @@ export default function UsersPage() {
         />
         <Column
           header="Acciones"
-          body={actionsTemplate}
+          body={(row: User) => (
+            <TableActionsColumn row={row} onEdit={openEdit} onDelete={handleDelete} />
+          )}
           bodyClassName="text-center"
           style={{ width: '8rem' }}
         />
-      </DataTable>
-
-      <Dialog
+      </CrudDataTable>
+      <UserFormDialog
         visible={dialogVisible}
-        header={editingUser ? 'Editar usuario' : 'Nuevo usuario'}
+        editing={editingUser}
+        initialValues={formValues}
+        saving={saving}
+        activeHeadquarters={activeHeadquarters}
         onHide={() => setDialogVisible(false)}
-        className="w-full max-w-lg"
-        modal
-      >
-        <form
-          key={formKey}
-          autoComplete="off"
-          onSubmit={handleSubmit(onSubmit)}
-          className="space-y-4"
-        >
-          <FormField label="Nombre" error={errors.name?.message} htmlFor="user-name">
-            <DnaInputText
-              id="user-name"
-              autoComplete="off"
-              {...register('name', { required: validationMessages.required })}
-            />
-          </FormField>
-          <FormField label="Correo" error={errors.email?.message} htmlFor="user-email">
-            <DnaInputText
-              id="user-email"
-              type="email"
-              autoComplete="off"
-              {...register('email', {
-                required: validationMessages.required,
-                pattern: {
-                  value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                  message: validationMessages.email,
-                },
-              })}
-            />
-          </FormField>
-          {!editingUser && (
-            <FormField label="Contraseña" error={errors.password?.message} htmlFor="user-password">
-              <Controller
-                name="password"
-                control={control}
-                rules={{
-                  required: validationMessages.required,
-                  minLength: {
-                    value: 8,
-                    message: validationMessages.minLength(8),
-                  },
-                }}
-                render={({ field }) => (
-                  <DnaPassword
-                    inputId="user-password"
-                    toggleMask
-                    feedback={false}
-                    autoComplete="new-password"
-                    value={field.value}
-                    onChange={(e) => field.onChange(e.target.value)}
-                  />
-                )}
-              />
-            </FormField>
-          )}
-          <FormField label="Rol" error={errors.role?.message}>
-            <Controller
-              name="role"
-              control={control}
-              rules={{ required: validationMessages.required }}
-              render={({ field }) => (
-                <DnaDropdown
-                  options={roleOptions}
-                  value={field.value}
-                  onChange={(e) => field.onChange(e.value)}
-                />
-              )}
-            />
-          </FormField>
-          {selectedRole === 'OPERADOR' && (
-            <FormField label="Sede" error={errors.headquarterId?.message}>
-              <Controller
-                name="headquarterId"
-                control={control}
-                rules={{ required: validationMessages.required }}
-                render={({ field }) => (
-                  <DnaDropdown
-                    options={activeHeadquarters.map((hq) => ({
-                      label: `${hq.name} (${hq.city})`,
-                      value: hq.id,
-                    }))}
-                    value={field.value}
-                    onChange={(e) => field.onChange(e.value)}
-                    placeholder="Seleccionar sede"
-                  />
-                )}
-              />
-            </FormField>
-          )}
-          <div className="flex justify-end gap-2 pt-2">
-            <DnaButton
-              type="button"
-              variant="secondary"
-              label="Cancelar"
-              onClick={() => setDialogVisible(false)}
-            />
-            <DnaButton type="submit" variant="primary" label="Guardar" loading={saving} />
-          </div>
-        </form>
-      </Dialog>
+        onSubmit={onSubmit}
+      />
     </div>
   );
 }

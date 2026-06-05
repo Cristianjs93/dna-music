@@ -1,32 +1,18 @@
 import { useState } from 'react';
-import { useForm, Controller } from 'react-hook-form';
-import { FilterMatchMode } from 'primereact/api';
-import { Button } from 'primereact/button';
 import { Column } from 'primereact/column';
 import { ConfirmDialog } from 'primereact/confirmdialog';
-import { DataTable, type DataTableFilterMeta } from 'primereact/datatable';
-import { Dialog } from 'primereact/dialog';
 import { Tag } from 'primereact/tag';
-import { FormField } from '@/components/common/FormField';
 import { PageHeader } from '@/components/common/PageHeader';
-import { TableSearchInput } from '@/components/common/TableSearchInput';
-import {
-  DnaButton,
-  DnaCalendar,
-  DnaDropdown,
-  DnaInputText,
-} from '@/components/ui';
-import { useStudents, type StudentFormValues } from '@/hooks/useStudents';
-import type { Student, StudentStatus } from '@/types/api.types';
+import { CrudDataTable } from '@/components/crud/CrudDataTable';
+import { createGlobalFilter } from '@/components/crud/tableFilters';
+import { TableActionsColumn } from '@/components/crud/TableActionsColumn';
+import { StudentFormDialog } from '@/components/students/StudentFormDialog';
+import { DnaButton } from '@/components/ui';
+import { useStudents } from '@/hooks/useStudents';
+import type { StudentFormValues } from '@/hooks/students/student.types';
+import type { Student, StudentStatus } from '@/types/student.types';
 import { confirmDelete } from '@/utils/confirmDelete';
-import { validationMessages } from '@/utils/errorMessages';
 import { formatDate } from '@/utils/format';
-
-const statusOptions = [
-  { label: 'Activo', value: 'ACTIVO' as StudentStatus },
-  { label: 'Inactivo', value: 'INACTIVO' as StudentStatus },
-  { label: 'Retirado', value: 'RETIRADO' as StudentStatus },
-];
 
 const statusLabels: Record<StudentStatus, string> = {
   ACTIVO: 'Activo',
@@ -34,12 +20,7 @@ const statusLabels: Record<StudentStatus, string> = {
   RETIRADO: 'Retirado',
 };
 
-const emptyFilters: DataTableFilterMeta = {
-  global: { value: null, matchMode: FilterMatchMode.CONTAINS },
-  fullName: { value: null, matchMode: FilterMatchMode.CONTAINS },
-  email: { value: null, matchMode: FilterMatchMode.CONTAINS },
-  status: { value: null, matchMode: FilterMatchMode.EQUALS },
-};
+const studentFilters = createGlobalFilter(['fullName', 'email', 'status']);
 
 export default function StudentsPage() {
   const {
@@ -56,31 +37,20 @@ export default function StudentsPage() {
 
   const [dialogVisible, setDialogVisible] = useState(false);
   const [editing, setEditing] = useState<Student | null>(null);
-  const [filters, setFilters] = useState<DataTableFilterMeta>(emptyFilters);
-  const [globalFilter, setGlobalFilter] = useState('');
-
-  const {
-    register,
-    handleSubmit,
-    reset,
-    control,
-    formState: { errors },
-  } = useForm<StudentFormValues>({
-    defaultValues: {
-      fullName: '',
-      email: '',
-      phone: '',
-      identityCard: '',
-      headquarterId: '',
-      program: '',
-      status: 'ACTIVO',
-      enrollmentDate: new Date(),
-    },
+  const [formValues, setFormValues] = useState<StudentFormValues>({
+    fullName: '',
+    email: '',
+    phone: '',
+    identityCard: '',
+    headquarterId: '',
+    program: '',
+    status: 'ACTIVO',
+    enrollmentDate: new Date(),
   });
 
   const openCreate = () => {
     setEditing(null);
-    reset({
+    setFormValues({
       fullName: '',
       email: '',
       phone: '',
@@ -95,7 +65,7 @@ export default function StudentsPage() {
 
   const openEdit = (student: Student) => {
     setEditing(student);
-    reset({
+    setFormValues({
       fullName: student.fullName,
       email: student.email,
       phone: student.phone,
@@ -103,9 +73,7 @@ export default function StudentsPage() {
       headquarterId: student.headquarterId,
       program: student.program,
       status: student.status,
-      enrollmentDate: student.enrollmentDate
-        ? new Date(student.enrollmentDate)
-        : new Date(),
+      enrollmentDate: student.enrollmentDate ? new Date(student.enrollmentDate) : new Date(),
     });
     setDialogVisible(true);
   };
@@ -123,50 +91,6 @@ export default function StudentsPage() {
       },
     });
   };
-
-  const statusTemplate = (student: Student) => {
-    const severity =
-      student.status === 'ACTIVO'
-        ? 'success'
-        : student.status === 'INACTIVO'
-          ? 'warning'
-          : 'danger';
-    return (
-      <div className="flex justify-center">
-        <Tag value={statusLabels[student.status]} severity={severity} />
-      </div>
-    );
-  };
-
-  const actionsTemplate = (student: Student) => (
-    <div className="flex justify-center gap-2">
-      <Button
-        icon="pi pi-pencil"
-        rounded
-        text
-        severity="info"
-        onClick={() => openEdit(student)}
-        tooltip="Editar"
-      />
-      <Button
-        icon="pi pi-trash"
-        rounded
-        text
-        severity="danger"
-        onClick={() => handleDelete(student)}
-        tooltip="Eliminar"
-      />
-    </div>
-  );
-
-  const header = (
-    <div className="flex flex-wrap items-center justify-between gap-3">
-      <span className="text-lg font-semibold">Listado de estudiantes</span>
-      <TableSearchInput value={globalFilter} onChange={setGlobalFilter} />
-    </div>
-  );
-
-  const formKey = editing?.id ?? 'create';
 
   return (
     <div>
@@ -187,23 +111,13 @@ export default function StudentsPage() {
           />
         }
       />
-
-      <DataTable
+      <CrudDataTable
         value={students}
         loading={loading}
-        paginator
-        rows={10}
-        rowsPerPageOptions={[5, 10, 25]}
-        filters={filters}
-        filterDisplay="row"
-        globalFilterFields={['fullName', 'email', 'program', 'status']}
-        globalFilter={globalFilter}
-        onFilter={(e) => setFilters(e.filters)}
-        stripedRows
-        showGridlines
+        title="Listado de estudiantes"
         emptyMessage="No hay estudiantes registrados."
-        dataKey="id"
-        header={header}
+        globalFilterFields={['fullName', 'email', 'program', 'status']}
+        initialFilters={studentFilters}
       >
         <Column field="fullName" header="Nombre" sortable filter filterPlaceholder="Buscar" />
         <Column field="email" header="Correo" sortable filter filterPlaceholder="Buscar" />
@@ -219,7 +133,19 @@ export default function StudentsPage() {
         <Column
           field="status"
           header="Estado"
-          body={statusTemplate}
+          body={(student: Student) => {
+            const severity =
+              student.status === 'ACTIVO'
+                ? 'success'
+                : student.status === 'INACTIVO'
+                  ? 'warning'
+                  : 'danger';
+            return (
+              <div className="flex justify-center">
+                <Tag value={statusLabels[student.status]} severity={severity} />
+              </div>
+            );
+          }}
           sortable
           filter
           bodyClassName="text-center"
@@ -232,131 +158,23 @@ export default function StudentsPage() {
         />
         <Column
           header="Acciones"
-          body={actionsTemplate}
+          body={(row: Student) => (
+            <TableActionsColumn row={row} onEdit={openEdit} onDelete={handleDelete} />
+          )}
           bodyClassName="text-center"
           style={{ width: '8rem' }}
         />
-      </DataTable>
-
-      <Dialog
+      </CrudDataTable>
+      <StudentFormDialog
         visible={dialogVisible}
-        header={editing ? 'Editar estudiante' : 'Nuevo estudiante'}
+        editing={editing}
+        initialValues={formValues}
+        saving={saving}
+        isAdmin={isAdmin}
+        headquarterOptions={headquarterOptions}
         onHide={() => setDialogVisible(false)}
-        className="w-full max-w-2xl"
-        modal
-      >
-        <form
-          key={formKey}
-          autoComplete="off"
-          onSubmit={handleSubmit(onSubmit)}
-          className="grid gap-4 md:grid-cols-2"
-        >
-          <FormField
-            label="Nombre completo"
-            error={errors.fullName?.message}
-            htmlFor="student-fullname"
-            className="md:col-span-2"
-          >
-            <DnaInputText
-              id="student-fullname"
-              autoComplete="off"
-              {...register('fullName', { required: validationMessages.required })}
-            />
-          </FormField>
-          <FormField
-            label="Correo"
-            error={errors.email?.message}
-            htmlFor="student-email"
-            className="md:col-span-2"
-          >
-            <DnaInputText
-              id="student-email"
-              type="email"
-              autoComplete="off"
-              {...register('email', {
-                required: validationMessages.required,
-                pattern: {
-                  value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                  message: validationMessages.email,
-                },
-              })}
-            />
-          </FormField>
-          <FormField label="Teléfono" error={errors.phone?.message} htmlFor="student-phone">
-            <DnaInputText
-              id="student-phone"
-              autoComplete="off"
-              {...register('phone', { required: validationMessages.required })}
-            />
-          </FormField>
-          <FormField label="Documento" error={errors.identityCard?.message} htmlFor="student-id">
-            <DnaInputText
-              id="student-id"
-              autoComplete="off"
-              {...register('identityCard', { required: validationMessages.required })}
-            />
-          </FormField>
-          <FormField label="Programa" error={errors.program?.message} htmlFor="student-program">
-            <DnaInputText
-              id="student-program"
-              autoComplete="off"
-              {...register('program', { required: validationMessages.required })}
-            />
-          </FormField>
-          <FormField label="Sede" error={errors.headquarterId?.message}>
-            <Controller
-              name="headquarterId"
-              control={control}
-              rules={{ required: validationMessages.required }}
-              render={({ field }) => (
-                <DnaDropdown
-                  options={headquarterOptions}
-                  value={field.value}
-                  onChange={(e) => field.onChange(e.value)}
-                  disabled={!isAdmin}
-                  placeholder="Seleccionar sede"
-                />
-              )}
-            />
-          </FormField>
-          <FormField label="Estado" error={errors.status?.message}>
-            <Controller
-              name="status"
-              control={control}
-              render={({ field }) => (
-                <DnaDropdown
-                  options={statusOptions}
-                  value={field.value}
-                  onChange={(e) => field.onChange(e.value)}
-                />
-              )}
-            />
-          </FormField>
-          <FormField label="Fecha de matrícula" error={errors.enrollmentDate?.message}>
-            <Controller
-              name="enrollmentDate"
-              control={control}
-              render={({ field }) => (
-                <DnaCalendar
-                  value={field.value}
-                  onChange={(e) => field.onChange(e.value ?? null)}
-                  dateFormat="yy-mm-dd"
-                  showIcon
-                />
-              )}
-            />
-          </FormField>
-          <div className="flex justify-end gap-2 md:col-span-2">
-            <DnaButton
-              type="button"
-              variant="secondary"
-              label="Cancelar"
-              onClick={() => setDialogVisible(false)}
-            />
-            <DnaButton type="submit" variant="primary" label="Guardar" loading={saving} />
-          </div>
-        </form>
-      </Dialog>
+        onSubmit={onSubmit}
+      />
     </div>
   );
 }

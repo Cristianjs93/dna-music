@@ -6,7 +6,6 @@ import { Column } from 'primereact/column';
 import { ConfirmDialog } from 'primereact/confirmdialog';
 import { DataTable, type DataTableFilterMeta } from 'primereact/datatable';
 import { Dialog } from 'primereact/dialog';
-import { Toast } from 'primereact/toast';
 import { FormField } from '@/components/common/FormField';
 import { PageHeader } from '@/components/common/PageHeader';
 import { TableSearchInput } from '@/components/common/TableSearchInput';
@@ -37,7 +36,6 @@ export default function UsersPage() {
     saving,
     saveUser,
     removeUser,
-    toastRef,
   } = useUsers();
 
   const [dialogVisible, setDialogVisible] = useState(false);
@@ -134,7 +132,6 @@ export default function UsersPage() {
 
   return (
     <div>
-      <Toast ref={toastRef} />
       <ConfirmDialog />
       <PageHeader
         title="Usuarios"

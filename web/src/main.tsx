@@ -7,6 +7,7 @@ import 'primereact/resources/themes/lara-dark-amber/theme.css';
 import 'primereact/resources/primereact.min.css';
 import 'primeicons/primeicons.css';
 import App from './App';
+import { ToastProvider } from './components/providers/ToastProvider';
 import { store } from './store';
 import './index.css';
 
@@ -26,9 +27,11 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <Provider store={store}>
       <PrimeReactProvider>
-        <BrowserRouter>
-          <App />
-        </BrowserRouter>
+        <ToastProvider>
+          <BrowserRouter>
+            <App />
+          </BrowserRouter>
+        </ToastProvider>
       </PrimeReactProvider>
     </Provider>
   </StrictMode>,

@@ -13,8 +13,8 @@ import type {
   Student,
   StudentStatus,
 } from '@/types/api.types';
+import { useToastContext } from '@/context/toast.context';
 import { getErrorMessage } from '@/utils/format';
-import { useToast } from './useToast';
 
 export interface StudentFormValues {
   fullName: string;
@@ -28,7 +28,7 @@ export interface StudentFormValues {
 }
 
 export function useStudents() {
-  const { toastRef, showError, showSuccess } = useToast();
+  const { showError, showSuccess } = useToastContext();
   const currentUser = useAppSelector((state) => state.auth.user);
   const isAdmin = currentUser?.role === 'ADMIN';
 
@@ -158,6 +158,5 @@ export function useStudents() {
     refresh,
     saveStudent,
     removeStudent,
-    toastRef,
   };
 }

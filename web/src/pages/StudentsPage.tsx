@@ -7,7 +7,6 @@ import { ConfirmDialog } from 'primereact/confirmdialog';
 import { DataTable, type DataTableFilterMeta } from 'primereact/datatable';
 import { Dialog } from 'primereact/dialog';
 import { Tag } from 'primereact/tag';
-import { Toast } from 'primereact/toast';
 import { FormField } from '@/components/common/FormField';
 import { PageHeader } from '@/components/common/PageHeader';
 import { TableSearchInput } from '@/components/common/TableSearchInput';
@@ -53,7 +52,6 @@ export default function StudentsPage() {
     headquarterOptions,
     saveStudent,
     removeStudent,
-    toastRef,
   } = useStudents();
 
   const [dialogVisible, setDialogVisible] = useState(false);
@@ -172,7 +170,6 @@ export default function StudentsPage() {
 
   return (
     <div>
-      <Toast ref={toastRef} />
       <ConfirmDialog />
       <PageHeader
         title="Estudiantes"

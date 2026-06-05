@@ -13,8 +13,8 @@ import type {
   UpdateUserPayload,
   User,
 } from '@/types/api.types';
+import { useToastContext } from '@/context/toast.context';
 import { getErrorMessage } from '@/utils/format';
-import { useToast } from './useToast';
 
 export interface UserFormValues {
   name: string;
@@ -25,7 +25,7 @@ export interface UserFormValues {
 }
 
 export function useUsers() {
-  const { toastRef, showError, showSuccess } = useToast();
+  const { showError, showSuccess } = useToastContext();
   const [users, setUsers] = useState<User[]>([]);
   const [headquarters, setHeadquarters] = useState<Headquarter[]>([]);
   const [loading, setLoading] = useState(true);
@@ -117,6 +117,5 @@ export function useUsers() {
     refresh,
     saveUser,
     removeUser,
-    toastRef,
   };
 }

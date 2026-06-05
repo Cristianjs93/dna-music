@@ -7,8 +7,8 @@ import {
   updateHeadquarter,
 } from '@/services/headquarters.service';
 import type { Headquarter } from '@/types/api.types';
+import { useToastContext } from '@/context/toast.context';
 import { getErrorMessage } from '@/utils/format';
-import { useToast } from './useToast';
 
 export interface HeadquarterFormValues {
   name: string;
@@ -18,7 +18,7 @@ export interface HeadquarterFormValues {
 }
 
 export function useHeadquarters() {
-  const { toastRef, showError, showSuccess } = useToast();
+  const { showError, showSuccess } = useToastContext();
   const [headquarters, setHeadquarters] = useState<Headquarter[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -88,6 +88,5 @@ export function useHeadquarters() {
     refresh,
     saveHeadquarter,
     removeHeadquarter,
-    toastRef,
   };
 }

@@ -8,7 +8,6 @@ import { DataTable, type DataTableFilterMeta } from 'primereact/datatable';
 import { Dialog } from 'primereact/dialog';
 import { InputSwitch } from 'primereact/inputswitch';
 import { Tag } from 'primereact/tag';
-import { Toast } from 'primereact/toast';
 import { FormField } from '@/components/common/FormField';
 import { PageHeader } from '@/components/common/PageHeader';
 import { TableSearchInput } from '@/components/common/TableSearchInput';
@@ -35,7 +34,6 @@ export default function HeadquartersPage() {
     saving,
     saveHeadquarter,
     removeHeadquarter,
-    toastRef,
   } = useHeadquarters();
 
   const [dialogVisible, setDialogVisible] = useState(false);
@@ -125,7 +123,6 @@ export default function HeadquartersPage() {
 
   return (
     <div>
-      <Toast ref={toastRef} />
       <ConfirmDialog />
       <PageHeader
         title="Sedes"

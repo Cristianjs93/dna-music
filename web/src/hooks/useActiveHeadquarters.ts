@@ -5,8 +5,9 @@ import type { Headquarter } from '@/types/headquarter.types';
 
 export function useActiveHeadquarters(enabled = true) {
   const { data, loading, refresh } = useResourceList<Headquarter>(
-    () => (enabled ? headquarterRepository.list() : Promise.resolve([])),
+    headquarterRepository.list,
     'No fue posible cargar sedes.',
+    enabled,
   );
 
   const activeHeadquarters = useMemo(

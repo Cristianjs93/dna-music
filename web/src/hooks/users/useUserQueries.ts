@@ -4,7 +4,7 @@ import type { User } from '@/types/user.types';
 
 export function useUserQueries() {
   return useResourceList<User>(
-    () => userRepository.list(),
+    userRepository.list,
     'No fue posible cargar usuarios.',
   );
 }

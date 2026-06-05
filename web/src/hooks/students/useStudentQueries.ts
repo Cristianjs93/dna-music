@@ -4,7 +4,7 @@ import type { Student } from '@/types/student.types';
 
 export function useStudentQueries() {
   return useResourceList<Student>(
-    () => studentRepository.list(),
+    studentRepository.list,
     'No fue posible cargar estudiantes.',
   );
 }

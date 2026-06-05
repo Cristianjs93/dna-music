@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Role, type Prisma } from '#generated/prisma';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '#/prisma/prisma.service';
@@ -14,13 +14,17 @@ const SALT_ROUNDS = 12;
 
 @Injectable()
 export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   async create(createUserDto: CreateUserDto): Promise<UserPublic> {
+    this.logger.log(`Creating user ${{ email: createUserDto.email, role: createUserDto.role }}`);
+
     await this.validateHeadquarterAssignment(createUserDto.role, createUserDto.headquarterId);
 
     try {
-      return await this.prisma.user.create({
+      const user = await this.prisma.user.create({
         data: {
           name: createUserDto.name,
           email: createUserDto.email,
@@ -30,26 +34,49 @@ export class UsersService {
         },
         select: userPublicSelect,
       });
+
+      this.logger.log(`User created successfully: ${user}`);
+      return user;
     } catch (error: unknown) {
+      this.logger.error(
+        `Failed to create user email=${createUserDto.email}`,
+        error instanceof Error ? error.stack : String(error),
+      );
       rethrowPrismaKnownError(error, USER_PRISMA_ERRORS);
     }
   }
 
   async findAll(): Promise<UserPublic[]> {
-    return this.prisma.user.findMany({
-      where: { deletedAt: null },
-      select: userPublicSelect,
-      orderBy: { createdAt: 'desc' },
-    });
+    this.logger.log('Listing users');
+
+    try {
+      const users = this.prisma.user.findMany({
+        where: { deletedAt: null },
+        select: userPublicSelect,
+        orderBy: { createdAt: 'desc' },
+      });
+
+      this.logger.log('Users listed successfully');
+      return users;
+    } catch (error: unknown) {
+      this.logger.error(
+        `Failed to list users`,
+        error instanceof Error ? error.stack : String(error),
+      );
+      rethrowPrismaKnownError(error, USER_PRISMA_ERRORS);
+    }
   }
 
   async findOne(id: string): Promise<UserPublic> {
+    this.logger.log(`Fetching user ${{ id }}`);
+
     const user = await this.prisma.user.findUnique({
       where: { id },
       select: userPublicSelect,
     });
 
     if (!isDefined(user)) {
+      this.logger.error(`User not found ${{ id }}`);
       throw domainException(USER_DOMAIN_ERRORS.userNotFound);
     }
 
@@ -57,12 +84,15 @@ export class UsersService {
   }
 
   async update(id: string, updateUserDto: UpdateUserDto): Promise<UserPublic> {
+    this.logger.log(`Updating user ${{ id }}`);
+
     const current = await this.prisma.user.findUnique({
       where: { id },
       select: { role: true, headquarterId: true },
     });
 
     if (!isDefined(current)) {
+      this.logger.error(`User not found ${{ id }}`);
       throw domainException(USER_DOMAIN_ERRORS.userNotFound);
     }
 
@@ -84,26 +114,42 @@ export class UsersService {
     };
 
     try {
-      return await this.prisma.user.update({
+      const user = await this.prisma.user.update({
         where: { id },
         data,
         select: userPublicSelect,
       });
+
+      this.logger.log(`User updated ${{ id }}`);
+      return user;
     } catch (error: unknown) {
+      this.logger.error(
+        `Failed to update user ${{ id }}`,
+        error instanceof Error ? error.stack : String(error),
+      );
       rethrowPrismaKnownError(error, USER_PRISMA_ERRORS);
     }
   }
 
   async remove(id: string): Promise<UserPublic> {
+    this.logger.log(`Soft-deleting user ${{ id }}`);
+
     await this.ensureUserExists(id);
 
     try {
-      return await this.prisma.user.update({
+      const user = await this.prisma.user.update({
         where: { id },
         data: { deletedAt: new Date() },
         select: userPublicSelect,
       });
+
+      this.logger.log(`User soft-deleted ${{ id }}`);
+      return user;
     } catch (error: unknown) {
+      this.logger.error(
+        `Failed to soft-delete user ${{ id }}`,
+        error instanceof Error ? error.stack : String(error),
+      );
       rethrowPrismaKnownError(error, USER_PRISMA_ERRORS);
     }
   }

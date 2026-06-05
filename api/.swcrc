@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json.schemastore.org/swcrc",
+  "sourceMaps": true,
+  "jsc": {
+    "parser": {
+      "syntax": "typescript",
+      "decorators": true,
+      "dynamicImport": true
+    },
+    "transform": {
+      "legacyDecorator": true,
+      "decoratorMetadata": true
+    },
+    "baseUrl": "./",
+    "paths": {
+      "#/*": [
+        "src/*"
+      ],
+      "#generated/prisma": [
+        "generated/prisma/index.js"
+      ],
+      "#generated/prisma/*": [
+        "generated/prisma/*"
+      ],
+      "#util/*": [
+        "src/util/*"
+      ],
+      "#db/*": [
+        "prisma/*"
+      ]
+    },
+    "target": "es2023",
+    "keepClassNames": true
+  },
+  "module": {
+    "type": "commonjs"
+  }
+}

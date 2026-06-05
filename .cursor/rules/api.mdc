@@ -31,3 +31,11 @@
 3. **Data Lifecycle**: Implement Soft Delete mechanics where reasonable (retaining rows with a `deletedAt` timestamp instead of physically removing them from PostgreSQL).
 4. **Input Validation**: Enforce strict DTO validation using `class-validator` and `class-transformer`.
 5. **Database Seeds**: Initial data lives in `api/prisma/seed.ts`. Run via `npm run db:seed` (see `.cursor/commands/db-seed`). Passwords must be bcrypt-hashed in seed, never stored in plain text.
+
+## OpenAPI / Swagger
+
+- Setup in `#util/swagger/swagger.setup.ts`, invoked from `main.ts`.
+- UI: `http://localhost:3000/api/docs` (with global prefix `api`).
+- Decorate controllers: `@ApiTags`, `@ApiOperation`, `@ApiOkResponse`, `@ApiParam`, etc.
+- Decorate DTOs: `@ApiProperty` / `@ApiPropertyOptional` on every field.
+- Response schemas: dedicated `*-response.dto.ts` classes; never expose `password` in response DTOs.

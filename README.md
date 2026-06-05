@@ -1,225 +1,208 @@
-# DNA Music — Student management by branch
+# DNA Music — Branch-scoped student management
 
-A small application built as part of the [DNA Music](https://dnamusic.edu.co) technical assessment. It simulates a slice of the institution's internal ERP: managing users, branches, and students based on each person's role.
+Internal ERP mini-app built for the [DNA Music](https://dnamusic.edu.co) technical assessment. It models how the institution manages users, branches (headquarters), and students with role-based access across multiple cities.
 
-The goal is to demonstrate sound backend judgment, security awareness, code organization, and delivery practices — not visual polish or a full enterprise architecture.
+The goal is to demonstrate sound backend judgment, security awareness, code organization, and delivery practices — not visual polish or enterprise-scale infrastructure.
 
-## What does this project do?
+## Business domain
 
-DNA Music operates across multiple cities with different user profiles:
+DNA Music operates across multiple branches. Two roles drive all behaviour:
 
-- An **administrator** can view and manage everything, including creating new users.
-- An **operator** only works with data from their assigned branch.
+| Role         | Scope                                                                                                             |
+| ------------ | ----------------------------------------------------------------------------------------------------------------- |
+| **ADMIN**    | Full visibility and management: users, branches, students, and dashboard statistics.                              |
+| **OPERADOR** | Branch-scoped access only. Can manage students (and update their own profile) within their assigned headquarters. |
 
-This repository implements that logic step by step: a REST API, a PostgreSQL database, and (coming soon) a frontend to tie both layers together.
+### Core entities
 
-## Repository structure
+- **User** — internal staff account (`ADMIN` or `OPERADOR`). Operators must be linked to exactly one active branch; admins must not have a branch assigned.
+- **Headquarter** — a physical branch/campus (name, city, address, active flag). Soft-deleted when removed.
+- **Student** — enrolled learner tied to one branch. Statuses: `ACTIVO`, `INACTIVO`, `RETIRADO`. Unique email, phone, and identity card.
+
+### Authentication model
+
+- **Login only** — no public self-registration. New users are provisioned by an ADMIN.
+- **JWT** — issued on login; required on all management endpoints.
+- **Branch isolation** — enforced in the API for operators; reflected in the UI (hidden routes, disabled branch selectors).
+
+## Monorepo layout
 
 ```text
 /
-├── .github/workflows/    # GitHub Actions (CI + remote DB setup)
-├── api/                  # Backend (NestJS + Prisma + PostgreSQL)
-├── web/                  # Frontend (React — work in progress)
+├── api/                  # NestJS REST API (see api/README.md)
+├── web/                  # React SPA (see web/README.md)
+├── .github/workflows/    # GitHub Actions (API CI + remote DB setup)
+├── .cursor/              # Cursor rules and commands for AI agents
 ├── analisis_tecnico.md   # Performance analysis (section 6)
 ├── git_respuestas.md     # Git workflow answers (section 7)
-└── README.md
+├── CLAUDE.mdc            # AI agent project hub
+└── README.md             # This file — project overview only
 ```
 
-## Stack
+Each package owns its own **run scripts**, **environment variables**, **architecture**, and **deployment** details. Do not duplicate them here.
 
-| Layer    | Technology         |
-| -------- | ------------------ |
-| Backend  | NestJS, TypeScript |
-| Database | PostgreSQL, Prisma |
-| API docs | Swagger (OpenAPI)  |
-| Frontend | React, Vite, Tailwind, PrimeReact |
-| CI/CD    | GitHub Actions     |
+| Document                                     | Scope                                                                   |
+| -------------------------------------------- | ----------------------------------------------------------------------- |
+| [api/README.md](./api/README.md)             | Backend setup, scripts, API surface, Prisma model, tests, Render deploy |
+| [web/README.md](./web/README.md)             | Frontend setup, scripts, layered architecture, routes, auth UX          |
+| [analisis_tecnico.md](./analisis_tecnico.md) | Performance and scaling notes                                           |
+| [git_respuestas.md](./git_respuestas.md)     | Version-control workflow answers                                        |
 
-## Running the project locally
+## Technology overview
 
-### Requirements
-
-- Node.js 24.16 (`nvm use` reads `.nvmrc`)
-- PostgreSQL running locally
-- npm
-
-### 1. Backend (`api/`)
-
-```bash
-cd api
-npm install
-cp .env.example .env
-# Edit .env with your DATABASE_URL if needed
-
-npm run db:generate
-npm run db:migrate
-npm run db:seed
-npm run start:dev
-```
-
-The API is available at `http://localhost:3000/api`.
-
-**Interactive API docs (Swagger):** `http://localhost:3000/api/docs`
-
-### 2. Frontend (`web/`)
-
-```bash
-cd web
-npm install
-cp .env.example .env
-npm run dev
-```
-
-The app runs at `http://localhost:5173`. Ensure `CORS_ORIGINS` in `api/.env` includes `http://localhost:5173`.
-
-## Test credentials
-
-Loaded automatically by the seed script (`npm run db:seed`):
-
-| Role     | Email                    | Password  | Branch   |
-| -------- | ------------------------ | --------- | -------- |
-| ADMIN    | admin@dnamusic.co        | Admin123! | All      |
-| OPERATOR | operador.bog@dnamusic.co | Oper123!  | Bogotá   |
-| OPERATOR | operador.med@dnamusic.co | Oper123!  | Medellín |
-
-The seed also creates **3 branches** (Bogotá, Medellín, Cali) and **6 sample students** in different statuses.
-
-## Authentication flow
-
-1. **Login** — `POST /api/auth/login` with email and password. Returns a JWT and the authenticated user profile. This is the only public auth endpoint.
-2. **Protected routes** — Send `Authorization: Bearer <token>` on all management endpoints.
-3. **User creation** — There is no public registration. New users are created by an **ADMIN** via `POST /api/users` (role-based guard planned).
-
-## Current development status
-
-| Module              | Status            |
-| ------------------- | ----------------- |
-| Users (CRUD API)    | Implemented       |
-| JWT authentication  | Implemented       |
-| Swagger / OpenAPI   | Implemented       |
-| Role-based guards   | Implemented       |
-| Branches (CRUD API) | Implemented       |
-| Students (API)      | Implemented       |
-| Statistics          | Implemented       |
-| React frontend      | Pending           |
-| Remote database     | Neon (PostgreSQL) |
-| GitHub Actions CI   | Implemented       |
-| API deploy (Render) | Ready to deploy   |
-| Web deploy          | Pending           |
-
-## CI/CD (GitHub Actions)
-
-Workflows run on **push** and **pull requests** to `main` (path filters avoid unrelated runs). Node **24.16.0** matches `.nvmrc`.
-
-| Workflow           | File                             | Trigger                                                       | What it does                                                                                               |
-| ------------------ | -------------------------------- | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| **API CI**         | `.github/workflows/api-ci.yml`   | Changes under `api/**`                                        | `npm ci` → Prisma generate → **lint** → **build** → **unit tests** (`--passWithNoTests` until specs exist) |
-| **Database setup** | `.github/workflows/db-setup.yml` | Changes under `api/prisma/**`, Prisma config, or API lockfile | Applies **`db:migrate:deploy`** and **`db:seed`** against the remote database                              |
-
-Both workflows support **Run workflow** manually (`workflow_dispatch`).
-
-### GitHub secret (database workflow)
-
-Add in the repository: **Settings → Secrets and variables → Actions → New repository secret**
-
-| Secret         | Value                                                                     |
-| -------------- | ------------------------------------------------------------------------- |
-| `DATABASE_URL` | Direct Neon PostgreSQL URL (not the pooler), including `?sslmode=require` |
-
-The database workflow does **not** run on every API code change — only when schema, migrations, or related dependencies change. After editing Prisma, push to `main` or trigger the workflow manually.
-
-Check run status under the repository **Actions** tab.
-
-## Deployment
-
-### Database (done)
-
-PostgreSQL on **Neon**. Migrations and seed run via GitHub Actions (`db-setup.yml`) or locally with `npm run db:setup`.
-
-### API — Render (free tier)
-
-The API ships as a **Docker** image (`api/Dockerfile`) and targets [Render](https://render.com) free web services. Render connects to your existing Neon database through `DATABASE_URL` — no Postgres addon required on Render.
-
-**Why Render:** free tier, Docker support, HTTPS, env vars, auto-deploy from GitHub. Trade-off: the service sleeps after ~15 minutes of inactivity (cold start ~30–60s on first request).
-
-#### One-time setup
-
-1. Push this repo to GitHub (already done).
-2. Sign in at [dashboard.render.com](https://dashboard.render.com) (GitHub login).
-3. **New → Web Service** → connect repository `dna-music`.
-4. Settings:
-   | Field | Value |
-   | ----- | ----- |
-   | **Root Directory** | `api` |
-   | **Runtime** | Docker |
-   | **Instance type** | Free |
-   | **Health Check Path** | `/api/health` |
-5. **Environment variables** (same Neon URL you use locally; use the **pooled** URL for the running app if Neon provides one):
-
-   | Variable          | Value                                                                     |
-   | ----------------- | ------------------------------------------------------------------------- |
-   | `DATABASE_URL`    | Neon PostgreSQL URL (`?sslmode=require`)                                  |
-   | `JWT_SECRET`      | Long random string (not the example from `.env.example`)                  |
-   | `JWT_EXPIRES_IN`  | `1h`                                                                      |
-   | `CORS_ORIGINS`    | Frontend URL when ready; for Swagger-only testing use your Render API URL |
-   | `BODY_SIZE_LIMIT` | `100kb`                                                                   |
-   | `THROTTLE_TTL_MS` | `60000`                                                                   |
-   | `THROTTLE_LIMIT`  | `100`                                                                     |
-
-   `PORT` is set automatically by Render — do not override unless their docs require it.
-
-6. **Create Web Service** and wait for the Docker build (~3–5 min first time).
-
-Alternatively, import `api/render.yaml` via **New → Blueprint** (set root to `api`).
-
-#### Verify
-
-```bash
-curl https://<your-service>.onrender.com/api/health
-# {"status":"ok"}
-
-# Swagger
-open https://<your-service>.onrender.com/api/docs
-```
-
-Login: `admin@dnamusic.co` / `Admin123!` (seed data from Neon).
-
-#### Local Docker (optional)
-
-```bash
-cd api
-docker build -t dna-music-api .
-docker run --rm -p 3000:3000 --env-file .env dna-music-api
-```
+| Layer             | Stack                                                               |
+| ----------------- | ------------------------------------------------------------------- |
+| API               | NestJS, TypeScript, Prisma, PostgreSQL                              |
+| Web               | React 19, Vite, TypeScript, Tailwind CSS, PrimeReact, Redux Toolkit |
+| Auth              | JWT (Bearer), bcrypt passwords, global guards + RBAC                |
+| Docs              | Swagger / OpenAPI at `/api/docs`                                    |
+| Database (remote) | Neon PostgreSQL                                                     |
+| API hosting       | Render (Docker, free tier)                                          |
+| CI                | GitHub Actions (`api-ci.yml`, `db-setup.yml`)                       |
+| Runtime           | Node.js **24.16.0** (`.nvmrc`)                                      |
 
 ## Deployment URLs
 
-| Service | URL       |
-| ------- | --------- |
-| API     | _Pending_ |
-| Web     | _Pending_ |
+| Service                | URL                                                                                          |
+| ---------------------- | -------------------------------------------------------------------------------------------- |
+| **API** (Render)       | [https://dna-music-lrfa.onrender.com](https://dna-music-lrfa.onrender.com)                   |
+| **API docs** (Swagger) | [https://dna-music-lrfa.onrender.com/api/docs](https://dna-music-lrfa.onrender.com/api/docs) |
+| **Web** (Vercel)       | [https://dna-music-nine.vercel.app](https://dna-music-nine.vercel.app)                       |
 
-## Environment variables
+Setup and environment details: [api/README.md](./api/README.md#deployment) · [web/README.md](./web/README.md#deployment).
 
-Copy `api/.env.example` to `api/.env`. Main variables:
+## Test credentials
 
-- `PORT` — server port (default `3000`)
-- `DATABASE_URL` — PostgreSQL connection string
-- `JWT_SECRET` — secret for signing tokens
-- `JWT_EXPIRES_IN` — token lifetime (default `1h`)
-- `CORS_ORIGINS` — allowed frontend origins (comma-separated)
+Preloaded by the API seed (`npm run db:seed` in `api/`). Use these on both local and deployed environments:
 
-Do not commit `.env` files to the repository. For CI, only `DATABASE_URL` is required as a GitHub Actions secret (see [CI/CD](#cicd-github-actions)).
+| Role         | Email                      | Password    | Branch       |
+| ------------ | -------------------------- | ----------- | ------------ |
+| **ADMIN**    | `admin@dnamusic.co`        | `Admin123!` | All branches |
+| **OPERADOR** | `operador.bog@dnamusic.co` | `Oper123!`  | Bogotá       |
+| **OPERADOR** | `operador.med@dnamusic.co` | `Oper123!`  | Medellín     |
+
+The seed also creates **3 branches** (Bogotá, Medellín, Cali) and **6 sample students** in mixed statuses (`ACTIVO`, `INACTIVO`, `RETIRADO`).
+
+## Security decisions
+
+Security is a first-class requirement for this assessment. Below is what was **implemented** and what is **consciously accepted** as a trade-off.
+
+### Implemented
+
+| Area                  | Decision                                                                                                                                      |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Authentication**    | Login-only flow. No public self-registration; users are provisioned by ADMIN.                                                                 |
+| **Password storage**  | bcrypt hashing (12 salt rounds). Plain-text passwords never stored.                                                                           |
+| **Login errors**      | Generic `"Invalid credentials"` only — no email/password distinction (anti-enumeration).                                                      |
+| **Timing attacks**    | Dummy bcrypt compare when email is unknown, so failed logins take similar time.                                                               |
+| **JWT**               | Signed with `JWT_SECRET` from env; expiry via `JWT_EXPIRES_IN` (default `1h`). Re-validated on every request (user exists, not soft-deleted). |
+| **Authorization**     | Global `JwtAuthGuard` + `RolesGuard`. Branch scoping enforced in services for OPERADOR.                                                       |
+| **HTTP hardening**    | `helmet` security headers, explicit `CORS_ORIGINS` (no wildcard with credentials), JSON body size limit (`BODY_SIZE_LIMIT`).                  |
+| **Rate limiting**     | Global `@nestjs/throttler` + stricter limit on `POST /auth/login`.                                                                            |
+| **Input validation**  | Global `ValidationPipe` with `whitelist` and `forbidNonWhitelisted` on all DTOs.                                                              |
+| **Soft delete**       | `deletedAt` on users, branches, and students — records are not physically removed.                                                            |
+| **Secrets**           | All secrets in `.env` / platform env vars. `DATABASE_URL` as GitHub Actions secret only.                                                      |
+| **Frontend token**    | JWT held **in memory only** (`tokenStore`) — not in `localStorage` (reduces XSS token theft).                                                 |
+| **UI access control** | Admin routes hidden in sidebar; branch selectors disabled for OPERADOR.                                                                       |
+
+### Known trade-offs
+
+| Area                       | Trade-off                                           | Rationale                                                                               |
+| -------------------------- | --------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| **Session persistence**    | Token lost on page reload                           | In-memory storage chosen over `localStorage` XSS risk.                                  |
+| **Internal UUIDs exposed** | API returns database UUIDs to the frontend          | Acceptable for an internal admin panel; would use public IDs in production (see below). |
+| **No refresh tokens**      | Single access token with fixed expiry               | Simpler model for assessment scope; users re-login after expiry.                        |
+| **No web CI**              | Frontend lint/build not automated in GitHub Actions | Manual checks before deploy; API CI covers backend.                                     |
+| **Render free tier**       | Cold starts after ~15 min inactivity                | Acceptable for demo; first request may take 30–60s.                                     |
+
+Full security policies for agents: `.cursor/rules/security.mdc`.
+
+## Git commands used
+
+Representative commands from this project's development workflow (atomic commits, feature branches off `main`):
+
+```bash
+# Environment
+nvm use                                    # Node 24.16.0 from .nvmrc
+
+# Daily workflow
+git status
+git diff
+git add <files>
+git commit -m "feat(api): add students module with branch scope"
+git log --oneline -10
+
+# Branching
+git checkout -b feature/students-crud
+git checkout main
+git merge feature/students-crud
+
+# History inspection
+git log --oneline
+git diff main...HEAD                       # changes since diverging from main
+
+# Remote
+git push -u origin main
+git pull origin main
+```
+
+Commit style follows **Conventional Commits** (`feat`, `fix`, `refactor`, `docs`, `chore`, `test`). The history was built incrementally — one logical change per commit (schema → module → tests → frontend layer, etc.).
+
+Extended Git workflow answers: [git_respuestas.md](./git_respuestas.md) (if present in submission).
+
+## Project status
+
+| Area                                     | Status |
+| ---------------------------------------- | ------ |
+| Users CRUD + RBAC                        | Done   |
+| JWT auth + security hardening            | Done   |
+| Headquarters CRUD                        | Done   |
+| Students CRUD + branch scope             | Done   |
+| Dashboard stats (`GET /api/stats`)       | Done   |
+| Swagger / OpenAPI                        | Done   |
+| Unit tests (auth, RBAC, students, stats) | Done   |
+| React frontend (all CRUD modules)        | Done   |
+| Remote database (Neon)                   | Done   |
+| GitHub Actions CI + DB workflow          | Done   |
+| API deploy (Render)                      | Done   |
+| Web deploy (Vercel)                      | Done   |
+
+## CI/CD (summary)
+
+Workflows run on **push** and **pull requests** to `main` with path filters. Node **24.16.0** matches `.nvmrc`.
+
+| Workflow                            | Trigger                                    | Purpose                         |
+| ----------------------------------- | ------------------------------------------ | ------------------------------- |
+| **API CI** (`api-ci.yml`)           | Changes under `api/**`                     | Lint, build, unit tests         |
+| **Database setup** (`db-setup.yml`) | Prisma schema, migrations, or API lockfile | `migrate deploy` + seed on Neon |
+
+Both support manual **Run workflow**. Full details, secrets, and local equivalents: [api/README.md — CI/CD](./api/README.md#cicd).
+
+## Deployment (summary)
+
+| Service  | Provider        | URL                                                                |
+| -------- | --------------- | ------------------------------------------------------------------ |
+| Database | Neon PostgreSQL | — (connection via env vars)                                        |
+| API      | Render (Docker) | [dna-music-lrfa.onrender.com](https://dna-music-lrfa.onrender.com) |
+| Web      | Vercel (static) | [dna-music-nine.vercel.app](https://dna-music-nine.vercel.app)     |
+
+Step-by-step setup: [api/README.md — Deployment](./api/README.md#deployment) · [web/README.md — Deployment](./web/README.md#deployment).
+
+## What I would do differently with more time
+
+1. **Public IDs instead of internal UUIDs** — expose opaque, non-sequential identifiers (e.g. `usr_abc123`, `std_xyz789`) to the frontend and public API responses, keeping database UUIDs internal. This reduces information leakage, simplifies log correlation, and is safer if endpoints are ever exposed beyond the internal panel.
+
+2. **Complete unit test coverage** — extend Jest suites to all services (users, headquarters, edge cases), add frontend tests (hook behaviour, form validation, route guards), and wire E2E tests into CI with a disposable test database.
+
+3. **Refresh tokens + httpOnly cookies** — if persistent sessions are required, move to a short-lived access token + refresh flow with secure cookie storage instead of in-memory-only JWT.
+
+4. **Web CI workflow** — add `web-ci.yml` (lint + build on `web/**` changes) to match API CI parity.
+
+5. **API versioning and audit log** — `/api/v1` prefix and a dedicated `audit_events` table for sensitive mutations.
 
 ## AI-assisted development
 
-This project is built with AI tooling (Cursor, Claude). Agent configuration lives in `CLAUDE.mdc` and `.cursor/`. All code is reviewed and understood before delivery.
-
-## Additional documentation
-
-- **Technical analysis** → `analisis_tecnico.md`
-- **Git and version control** → `git_respuestas.md`
-- **API details, DB scripts & workflows** → `api/README.md`
+Built with Cursor and Claude. Agent configuration lives in `CLAUDE.mdc` and `.cursor/`. All generated code is reviewed before delivery.
 
 ## Author
 

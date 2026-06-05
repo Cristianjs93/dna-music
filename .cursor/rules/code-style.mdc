@@ -3,42 +3,62 @@
 ## TypeScript
 
 - `strict: true` in all tsconfig files.
-- Prefer `interface` for public contracts; use `type` for unions and utility types.
-- Use named exports in domain modules; default exports only for page-level React components when applicable.
-- Use `readonly` for immutable DTO properties.
+- Prefer `interface` for public contracts; `type` for unions and mapped types.
+- Named exports in domain modules; default exports only for page-level React components.
+- `readonly` on immutable DTO properties.
 
-## Naming Conventions
+## Naming conventions
 
-| Scope               | Convention                                        | Example                |
-| ------------------- | ------------------------------------------------- | ---------------------- |
-| Backend files       | kebab-case                                        | `student.service.ts`   |
-| Classes             | PascalCase                                        | `StudentService`       |
-| Functions/variables | camelCase                                         | `findById`             |
-| Constants           | UPPER_SNAKE_CASE                                  | `MAX_FILE_SIZE`        |
-| Prisma enums        | PascalCase enum name, SCREAMING_SNAKE_CASE values | `StudentStatus.ACTIVE` |
-| React components    | PascalCase file name and export                   | `StudentsTable.tsx`    |
+| Scope | Convention | Example |
+| ----- | ---------- | ------- |
+| Backend files | kebab-case | `student.service.ts` |
+| Classes | PascalCase | `StudentService` |
+| Functions / variables | camelCase | `findById` |
+| Constants | UPPER_SNAKE_CASE | `MAX_FILE_SIZE` |
+| Prisma enums | PascalCase name, SCREAMING_SNAKE values | `StudentStatus.ACTIVO` |
+| React components | PascalCase file + export | `StudentsPage.tsx` |
+| Hook files | camelCase with `use` prefix | `useStudentQueries.ts` |
+| Repository files | `{entity}.repository.ts` | `user.repository.ts` |
+| Type files | `{entity}.types.ts` | `student.types.ts` |
 
-## Backend
+## Backend (`api/`)
 
-- One module = one folder under `src/` (e.g., `src/auth/`, `src/users/`).
-- Controllers: handle HTTP only; delegate logic to services.
-- Services: business logic, transactions, and orchestration.
-- Prisma access: inject `PrismaService` from the global `PrismaModule`.
-- DTOs: `class-validator` decorators + dedicated `*-response.dto.ts` for API output.
+- One module = one folder under `src/`.
+- Controllers: HTTP only → services.
+- Services: business logic + Prisma.
+- DTOs: `class-validator` input DTOs + `*-response.dto.ts` for output.
+- Error constants: `*-errors.constants.ts` per module.
+- Public Prisma selects: `*-public.select.ts` to avoid leaking fields.
 
-## Frontend
+## Frontend (`web/`)
 
-- HTTP services only in `src/services/`.
-- Server state: hooks in `src/hooks/` or within the corresponding module.
-- Presentation vs container components: use clear naming (`UsersTable` vs `UsersPage`).
+```text
+pages/        → thin composition
+hooks/        → data orchestration (queries + mutations per domain)
+repositories/ → service adapters behind interfaces
+services/     → Axios HTTP only
+mappers/      → form → payload
+types/        → domain types (split by entity)
+components/   → UI, dialogs, CRUD table
+context/      → React context (toast)
+store/        → Redux auth only
+utils/        → validation, formatting, confirm helpers
+```
+
+- HTTP calls only in `services/`.
+- Hooks call `repositories/`, never `services/` directly from pages.
+- Form dialogs in `components/{entity}/`; shared table in `components/crud/`.
 
 ## Formatting
 
 - Prettier: single quotes, ES5 trailing commas, `printWidth: 120`.
-- ESLint: no warnings in CI; `no-explicit-any` set to error.
+- ESLint: zero warnings in CI; `no-explicit-any` is error.
 
-## Commit Messages (Reference)
+## Commit messages
 
-- `feat(module): description`
-- `fix(module): description`
+- `feat(scope): description`
+- `fix(scope): description`
+- `refactor(scope): description`
+- `docs: description`
 - `chore: description`
+- `test: description`

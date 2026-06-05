@@ -1,26 +1,41 @@
 {
-    "name": "DNA Music",
-    "version": "1.0.0",
-    "projectType": "monorepo",
-    "primaryLanguages": ["typescript", "javascript"],
-    "backend": {
-      "framework": "nestjs",
-      "orm": "prisma",
-      "database": "postgresql"
-    },
-    "frontend": {
-      "framework": "react"
-    },
-    "preferredPackageManger": "npm",
-    "nodeVersion": "24.16.0",
-    "rulesDirectory": ".cursor/rules",
-    "enforceStrictTyping": true,
-    "permissions": {
-        "deny": [
-          "Read(**/.env)",
-          "Write(**/.env)"
-        ]
-      },
-    "include": ["api/**", "web/**", ".github/workflows/**", "CLAUDE.md", "README.md", ".nvmrc", ".cursor/**"],
-    "exclude": ["**/node_modules/**", "**/dist/**", "**/coverage/**", ".git/**"]
+  "name": "DNA Music",
+  "version": "1.0.0",
+  "projectType": "monorepo",
+  "primaryLanguages": ["typescript"],
+  "backend": {
+    "path": "api",
+    "framework": "nestjs",
+    "orm": "prisma",
+    "database": "postgresql",
+    "docs": "api/README.md"
+  },
+  "frontend": {
+    "path": "web",
+    "framework": "react",
+    "bundler": "vite",
+    "ui": "primereact",
+    "styling": "tailwindcss",
+    "docs": "web/README.md"
+  },
+  "preferredPackageManager": "npm",
+  "nodeVersion": "24.16.0",
+  "rulesDirectory": ".cursor/rules",
+  "commandsDirectory": ".cursor/commands",
+  "enforceStrictTyping": true,
+  "permissions": {
+    "deny": ["Read(**/.env)", "Write(**/.env)"]
+  },
+  "include": [
+    "api/**",
+    "web/**",
+    ".github/workflows/**",
+    "CLAUDE.mdc",
+    "README.md",
+    "api/README.md",
+    "web/README.md",
+    ".nvmrc",
+    ".cursor/**"
+  ],
+  "exclude": ["**/node_modules/**", "**/dist/**", "**/coverage/**", ".git/**", "api/generated/**"]
 }

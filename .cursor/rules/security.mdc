@@ -29,3 +29,10 @@ DNA Music handles sensitive student and corporate data. Security is our highest 
 
 - Global `ValidationPipe` with `whitelist` and `forbidNonWhitelisted` on all DTOs.
 - Auth DTOs must validate email format, required fields, and password length before hitting the service.
+
+## Frontend token handling (`web/`)
+
+- JWT stored **in memory only** (`utils/tokenStore.ts`) — never `localStorage` or `sessionStorage`.
+- Redux persists user profile, not the raw token.
+- Axios interceptor attaches the Bearer header; token is cleared on logout / page reload.
+- UI must mirror API RBAC: hide admin routes and disable branch selectors for OPERADOR.

@@ -1,13 +1,26 @@
 # Command: API Documentation (Swagger)
 
 ## Purpose
-Generates and serves the OpenAPI/Swagger specification UI for interactive API contract testing.
 
-## Access & Location
-The Swagger documentation module is compiled dynamically at application runtime in development mode.
-- **Default Endpoint**: Upon backend startup, access via web browser at `http://localhost:3000/api/docs`.
+Interactive OpenAPI UI for exploring and testing API endpoints.
 
-## Code Generation Standard
+## Access
 
-- Swagger setup: `api/src/config/swagger.config.ts` (invoked from `main.ts`).
-- When creating endpoints, use `@nestjs/swagger` decorators (`@ApiTags`, `@ApiOperation`, `@ApiResponse`, `@ApiBearerAuth`) on controllers and `@ApiProperty` on DTOs.
+Start the API first (`.cursor/commands/dev-api.mdc`), then open:
+
+**`http://localhost:3000/api/docs`**
+
+Production (when deployed): `https://<render-service>.onrender.com/api/docs`
+
+## Authentication in Swagger
+
+1. `POST /api/auth/login` with seed credentials.
+2. Copy `accessToken` from the response.
+3. Click **Authorize** → enter `Bearer <token>`.
+
+## Code location
+
+- Setup: `api/src/config/swagger.config.ts` (called from `main.ts`).
+- Decorators: `@ApiTags`, `@ApiOperation`, `@ApiBearerAuth` on controllers; `@ApiProperty` on DTOs.
+
+Full endpoint list and RBAC rules: `api/README.md`.

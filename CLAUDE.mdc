@@ -1,79 +1,86 @@
-# CLAUDE.md - Core Project Hub
+# CLAUDE.md — Project hub
 
-Welcome to the DNA Music ERP Mini-App repository. This project is a monorepo split into a NestJS backend and a React frontend.
+DNA Music monorepo: NestJS API + React SPA for branch-scoped student management.
 
-## Repository structure & context maps
+## Repository map
 
-- `api/` → Backend (NestJS + TypeScript + Prisma + PostgreSQL)
-- `web/` → Frontend (React + TypeScript — in progress)
-- `.github/workflows/` → GitHub Actions (API CI + remote DB migrate/seed)
-- `.cursor/rules/` → Granular AI prompt instructions and constraints
-- `.nvmrc` → Node `24.16.0`
+| Path | Role |
+| ---- | ---- |
+| `api/` | NestJS backend — [api/README.md](./api/README.md) |
+| `web/` | React frontend — [web/README.md](./web/README.md) |
+| `.github/workflows/` | API CI + remote DB migrate/seed |
+| `.cursor/rules/` | AI coding constraints |
+| `.cursor/commands/` | Runnable dev/test commands |
+| `.nvmrc` | Node `24.16.0` |
 
-## Current backend state
+Root [README.md](./README.md) covers business domain and monorepo overview only — no run scripts.
+
+## Current state
 
 | Area | Status |
 | ---- | ------ |
 | Prisma schema (User, Headquarter, Student) | Done |
-| Users CRUD (`/api/users`) + RBAC | Done |
-| Auth: login + JWT + `RolesGuard` | Done |
-| Security: helmet, CORS, throttling, timing-safe login | Done |
-| Headquarters CRUD (`/api/headquarters`) — ADMIN | Done |
-| Students CRUD (`/api/students`) — branch scope for OPERADOR | Done |
-| Stats (`GET /api/stats`) — Prisma `groupBy` aggregates — ADMIN | Done |
-| Remote DB (Neon) + GitHub Actions DB workflow | Done |
-| API CI (lint, build, test) | Done |
-| Unit tests (auth, RBAC, students scope, stats) | Done |
-| React frontend | Planned |
-| API deploy (Render Docker + Neon) | Ready (`api/Dockerfile`, `render.yaml`) |
-| Web hosting deploy | Planned |
+| Auth: login, JWT, `RolesGuard`, timing-safe errors | Done |
+| Users CRUD + RBAC | Done |
+| Headquarters CRUD (ADMIN) | Done |
+| Students CRUD + OPERADOR branch scope | Done |
+| Stats aggregates (ADMIN) | Done |
+| Security: helmet, CORS, throttling, body limits | Done |
+| Unit tests (auth, RBAC, students, stats) | Done |
+| React frontend (login, dashboard, all CRUD) | Done |
+| Layered web architecture (repos, hooks, mappers) | Done |
+| Remote DB (Neon) + `db-setup.yml` | Done |
+| API CI (`api-ci.yml`) | Done |
+| API deploy (Render Docker) | Done — https://dna-music-lrfa.onrender.com |
+| Web deploy (Vercel) | Done — https://dna-music-nine.vercel.app |
+| Web CI workflow | Not configured |
 
-### Auth decisions
+## Domain rules (both apps)
 
-- **Login** — `POST /api/auth/login` (public). Returns JWT + user profile.
-- **No public register** — users are provisioned by ADMIN via `POST /api/users`.
-- **Global guards** — `JwtAuthGuard` then `RolesGuard`; use `@Public()` and `@Roles(Role.ADMIN)` as needed.
-- **Security** — generic login errors, bcrypt (12 rounds), dummy hash on unknown email, single DB query on login.
+- **ADMIN** — global access; no `headquarterId` on user record.
+- **OPERADOR** — must have `headquarterId`; students scoped to that branch.
+- **No public registration** — ADMIN creates users via API.
+- **Soft delete** — `deletedAt` on all main entities.
 
-### Database & CI
+## Commands (`.cursor/commands/`)
 
-- **Production DB**: Neon PostgreSQL; `DATABASE_URL` in GitHub secret (not in repo).
-- **`db-setup.yml`**: on Prisma-related pushes to `main` → `migrate deploy` + `seed` (upserts).
-- **`api-ci.yml`**: on `api/**` push/PR → lint, build, `test --passWithNoTests`.
+| Command | Purpose |
+| ------- | ------- |
+| `dev-api.mdc` | Start NestJS watch server |
+| `dev-web.mdc` | Start Vite dev server |
+| `db-seed.mdc` | Seed / full DB setup |
+| `swagger.mdc` | Swagger UI location |
+| `test.mdc` | Run API unit tests |
 
-## Global orchestration scripts
+## Rules (`.cursor/rules/`)
 
-Read execution guidelines under `.cursor/commands/`:
+| Rule | Scope |
+| ---- | ----- |
+| `api.mdc` | NestJS modules, guards, Prisma, Swagger |
+| `web.mdc` | React layers, hooks, auth UX, repositories |
+| `security.mdc` | Secrets, JWT, bcrypt, throttling |
+| `ci.mdc` | GitHub Actions workflows |
+| `test.mdc` | Jest unit test standards |
+| `linter.mdc` | Mandatory lint workflow for agents |
+| `code-style.mdc` | Naming, formatting, structure |
+| `commit.mdc` | Conventional Commits |
 
-- **Run Backend**: `.cursor/commands/dev-api.mdc`
-- **Run Frontend**: `.cursor/commands/dev-web.mdc`
-- **Run Tests**: `.cursor/commands/test.mdc`
-- **Swagger**: `.cursor/commands/swagger.mdc`
-- **Database Seed**: `.cursor/commands/db-seed.mdc`
+## Agent workflow
 
-## AI alignment & modular rules
+### Before writing code
 
-Read and adhere to `.cursor/rules/` before writing code:
-
-- **Git & Conventional Commits**: `.cursor/rules/commit.mdc`
-- **CI/CD & remote DB**: `.cursor/rules/ci.mdc`
-- **Security & Auth**: `.cursor/rules/security.mdc`
-- **Backend Architecture**: `.cursor/rules/api.mdc`
-- **Frontend State & Roles**: `.cursor/rules/web.mdc`
-- **Unit Testing**: `.cursor/rules/test.mdc`
-- **Linting & Formatting**: `.cursor/rules/linter.mdc`
-- **Code Style**: `.cursor/rules/code-style.mdc`
-
-### During development
-
-1. Follow each app's architecture and existing conventions.
-2. Keep TypeScript strict; avoid `any`.
-3. Run relevant tests for the code you change.
-4. Use shared utilities (`domainException`, `rethrowPrismaKnownError`) where the project specifies.
-5. Use Node `24.16.0` (`nvm use`).
+1. Read the relevant scoped README (`api/` or `web/`).
+2. Follow `.cursor/rules/` for the target package.
+3. Match existing patterns — do not invent parallel abstractions.
 
 ### After changes
 
-1. Run quality checks (`npm run lint`, `npm run build` in `api/` or `web/`).
-2. If Prisma schema/migrations changed, note that `db-setup.yml` will run on push to `main`.
-3. Update README and `.cursor` rules if behavior, API contracts, or CI change.
+1. `ReadLints` on every touched file.
+2. `npm run lint` in `api/` and/or `web/` as applicable.
+3. `npm run build` when types or imports changed.
+4. If Prisma schema/migrations changed, note `db-setup.yml` runs on push to `main`.
+5. Update README / `.cursor` rules if contracts, architecture, or CI change.
+
+### Node version
+
+Always `24.16.0` — `nvm use` at repo root.

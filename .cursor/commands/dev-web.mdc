@@ -2,19 +2,38 @@
 
 ## Purpose
 
-Starts the React frontend application in development mode.
+Start the React SPA with Vite HMR.
 
 ## Prerequisites
 
 - Node.js **24.16.0** (`nvm use` at repo root)
-- Backend running (see `.cursor/commands/dev-api.mdc`)
-- Set `CORS_ORIGINS` in `api/.env` to include the Vite dev URL (e.g. `http://localhost:5173`)
+- API running (see `.cursor/commands/dev-api.mdc`)
+- `CORS_ORIGINS` in `api/.env` includes `http://localhost:5173`
+- `web/.env` with `VITE_API_URL` (default `http://localhost:3000/api`)
 
 ## Execution
-
-From the repo root:
 
 ```bash
 nvm use
 cd web && npm run dev
 ```
+
+| Resource | URL |
+| -------- | --- |
+| App | `http://localhost:5173` |
+| Login | `http://localhost:5173/login` |
+
+## Test credentials
+
+See root `README.md` or `api/README.md` seed table (`admin@dnamusic.co` / `Admin123!`).
+
+## Quality checks (before push)
+
+```bash
+cd web && npm run lint && npm run build
+```
+
+## Related
+
+- Full frontend docs: `web/README.md`
+- API backend: `.cursor/commands/dev-api.mdc`

@@ -15,7 +15,7 @@ After **any** edit to source files, the agent MUST complete this checklist **bef
 1. **IDE diagnostics**: Run `ReadLints` on every file created or modified in the session. Fix all reported errors; do not hand off broken TypeScript.
 2. **Project lint** (when `api/` or `web/` changed):
    - Backend: `cd api && npm run lint`
-   - Frontend: `cd web && npm run lint`
+   - Frontend: `cd web && npm run lint` (and `npm run build` when types/imports changed)
 3. If any step fails, fix the code and repeat from step 1. **Do not** claim the task is done while errors remain.
 
 ## Guidelines

@@ -2,12 +2,12 @@
 
 ## Purpose
 
-Loads initial data required by the technical test PDF into PostgreSQL.
+Apply migrations and load seed data into PostgreSQL (local or Neon).
 
 ## Prerequisites
 
-1. `api/.env` configured with `DATABASE_URL` (local Postgres or remote Neon).
-2. Migrations applied: `npm run db:migrate` (dev) or `npm run db:migrate:deploy` (production/CI).
+1. `api/.env` with valid `DATABASE_URL`.
+2. For dev-only migrations: `npm run db:migrate`. For production/CI parity: `npm run db:migrate:deploy`.
 
 ## Execution
 
@@ -15,7 +15,7 @@ Loads initial data required by the technical test PDF into PostgreSQL.
 cd api && npm run db:seed
 ```
 
-## Full local DB setup
+## Full local setup (recommended)
 
 ```bash
 cd api && npm run db:setup
@@ -27,11 +27,9 @@ Runs: `db:generate` → `db:migrate:deploy` → `db:seed`.
 
 Workflow: `.github/workflows/db-setup.yml`
 
-- **Triggers**: push to `main` when Prisma schema, migrations, or API lockfile change; or manual **Run workflow**.
-- **Requires**: repository secret `DATABASE_URL` (direct Neon URL with `?sslmode=require`).
-- **Steps**: same as `db:setup` against the remote database.
-
-Seed uses **upserts** — re-running on deploy is safe.
+- **Triggers**: push to `main` on Prisma-related changes; manual **Run workflow**.
+- **Requires**: repository secret `DATABASE_URL` (direct Neon URL, `?sslmode=require`).
+- Seed uses **upserts** — safe to re-run.
 
 ## Data loaded (`prisma/seed.ts`)
 
@@ -41,6 +39,6 @@ Seed uses **upserts** — re-running on deploy is safe.
 | ADMIN | `admin@dnamusic.co` / `Admin123!` |
 | OPERATOR Bogotá | `operador.bog@dnamusic.co` / `Oper123!` |
 | OPERATOR Medellín | `operador.med@dnamusic.co` / `Oper123!` |
-| Students | Sample records — ACTIVO, INACTIVO, RETIRADO across branches |
+| Students | 6 records — ACTIVO, INACTIVO, RETIRADO across branches |
 
-Passwords are bcrypt-hashed in seed; never store plain text in the database.
+Passwords are bcrypt-hashed; never plain text in the database.

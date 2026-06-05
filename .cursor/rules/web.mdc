@@ -1,12 +1,73 @@
 # Rule: React Frontend Standards
 
-## Core Principles
-- **Functionality > Aesthetics**: Clean, working code, cohesive state management, and strict integration with the API take precedence over intricate UI/UX design.
-- **TypeScript First**: Define solid Interfaces or Types for all API responses, User session objects, and Component Props.
+## Core principles
 
-## State & Auth Flow
+- **Functionality over aesthetics** — correct API integration, role-aware UX, and type safety come first.
+- **TypeScript strict** — domain types in `src/types/` (split by entity); no `any`.
+- **Thin pages** — pages compose hooks + shared components; no direct `services/` calls from pages.
 
-1. **Login** — Call `POST /api/auth/login` with email and password. There is no public registration; admins create users via the API.
-2. **Token Persistence** — Store the JWT from the login response securely (e.g., memory or `localStorage`; document the trade-off in the README security section).
-3. **HTTP Authorization Header** — Attach `Authorization: Bearer <JWT_TOKEN>` on all protected requests.
-4. **Conditional Rendering** — Adapt views by role (`ADMIN` vs. `OPERADOR`). Hide or disable branch selectors, user-management actions, and admin-only navigation when the operator role lacks permission.
+## Layered architecture
+
+Respect the established data flow:
+
+```text
+Page → Hook → Repository → Service → Axios (api.ts)
+```
+
+| Layer | Location | Responsibility |
+| ----- | -------- | -------------- |
+| Pages | `src/pages/` | Route composition, dialog visibility, table columns |
+| Hooks | `src/hooks/{domain}/` | Queries (`use*Queries`) + mutations (`use*Mutations`) |
+| Shared hooks | `src/hooks/common/` | `useResourceList`, `useMutationAction` |
+| Repositories | `src/repositories/` | Interface + adapter over `services/` |
+| Services | `src/services/` | HTTP only; no React imports |
+| Mappers | `src/mappers/` | Form values → API payloads |
+| Types | `src/types/` | Per-entity type files + `index.ts` barrel |
+| Components | `src/components/` | UI, CRUD table, form dialogs |
+
+Do not bypass repositories from hooks. Do not call repositories from components.
+
+## `useResourceList` — infinite-fetch guard
+
+- Pass **stable fetcher references** (`userRepository.list`), never inline arrows (`() => repo.list()`).
+- `fetcher` is stored in a `ref` inside `useResourceList` — do not add it to `useCallback` deps.
+- Use the `enabled` parameter for conditional fetches (e.g. `useActiveHeadquarters(isAdmin)`).
+
+## State and auth
+
+1. **Login** — `POST /api/auth/login` via `useLogin`. No public registration UI.
+2. **JWT** — in-memory only (`utils/tokenStore.ts`). Never `localStorage` / `sessionStorage`.
+3. **Redux** — `authSlice` only (user profile + `isAuthenticated`). No other global Redux state.
+4. **HTTP** — Axios interceptor in `services/api.ts` attaches `Authorization: Bearer <token>`.
+5. **`useAuthContext`** — use for `isAdmin`, `currentUser`, `headquarterId` instead of raw `useAppSelector` in feature code.
+6. **Route guards** — `ProtectedRoute` + `adminOnly` prop; mirror API RBAC in sidebar and form controls.
+
+## Toasts
+
+- Global `ToastProvider` in `main.tsx`.
+- Hooks use `useToastContext()` from `context/toast.context.ts`.
+- Pages must **not** mount `<Toast />` or pass `toastRef`.
+
+## Forms and validation
+
+- React Hook Form in `*FormDialog` components.
+- Shared rules in `utils/validationRules.ts` (`requiredRule`, `emailRule`, `passwordRule`).
+- Reset forms via `initialValues` prop + `useEffect` when dialog opens.
+- API errors translated in `utils/errorMessages.ts`.
+
+## CRUD patterns
+
+- `CrudDataTable` + `TableActionsColumn` for list pages.
+- `*FormDialog` per entity for create/edit.
+- `confirmDelete` utility for destructive actions.
+- Mappers handle payload shape (e.g. operator `headquarterId` rules, enrollment date formatting).
+
+## UI components
+
+- Wrap PrimeReact in `components/ui/Dna*` for consistent sizing and variants.
+- `FormField` for label + error placement below inputs.
+- Spanish UI copy; English code and types.
+
+## Quality checks
+
+After any `web/` change: `npm run lint` and `npm run build` must pass. No web CI workflow exists yet — local checks are mandatory.

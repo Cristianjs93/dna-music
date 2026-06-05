@@ -2,39 +2,55 @@
 
 ## Runtime
 
-- **Node.js**: `24.16.0` — pinned in repo root `.nvmrc` and `api/package.json` `engines`.
-- **Remote database**: PostgreSQL on **Neon** (production/staging). Local dev may use local Postgres or the same Neon URL in `api/.env` (never commit `.env`).
+- **Node.js**: `24.16.0` — `.nvmrc` + `api/package.json` engines.
+- **Database**: Neon PostgreSQL (remote). Local dev may use local Postgres or Neon URL in `api/.env` (never commit).
 
 ## GitHub Actions (branch `main`)
 
-| Workflow | Path | Triggers on | Steps |
-| -------- | ---- | ----------- | ----- |
-| **API CI** | `.github/workflows/api-ci.yml` | Push/PR when `api/**` changes; `workflow_dispatch` | `npm ci` → `db:generate` → `lint` → `build` → `test` (uses a **placeholder** `DATABASE_URL` only so `prisma.config.ts` loads; no DB connection) |
-| **Database setup** | `.github/workflows/db-setup.yml` | Push when `api/prisma/**`, `prisma.config.ts`, or API `package*.json` change; `workflow_dispatch` | `npm ci` → `db:generate` → `db:migrate:deploy` → `db:seed` |
+| Workflow | Path | Triggers | Steps |
+| -------- | ---- | -------- | ----- |
+| **API CI** | `api-ci.yml` | Push/PR when `api/**` changes; `workflow_dispatch` | `npm ci` → `db:generate` → `lint` → `build` → `test` |
+| **Database setup** | `db-setup.yml` | Push when `api/prisma/**`, `prisma.config.ts`, or API lockfile changes; `workflow_dispatch` | `npm ci` → `db:generate` → `db:migrate:deploy` → `db:seed` |
+
+**No web CI workflow** exists yet. Frontend quality checks are manual: `cd web && npm run lint && npm run build`.
 
 ## Secrets
 
-- Repository secret **`DATABASE_URL`**: direct Neon connection string (not pooler), with `?sslmode=require`. Required only for **Database setup**. If missing, `db-setup.yml` fails at the verify step with an explicit error.
+- **`DATABASE_URL`** (repository secret): direct Neon connection string with `?sslmode=require`. Required for Database setup only.
 
-## Node.js version vs Actions deprecation warning
+## Node.js deprecation warning in Actions logs
 
-- **App / npm / Prisma**: Node **24.16.0** via `actions/setup-node` (`node-version: '24.16.0'`).
-- **Deprecation warning** (`Node.js 20 actions are deprecated`): refers to the **internal runtime** of `actions/checkout@v4` and `actions/setup-node@v4` on GitHub's side — not your project Node version. Workflows set `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true` to opt into Node 24 for those actions.
-- Never commit secrets; agents must not read or write `api/.env`.
+- App uses Node **24.16.0** via `actions/setup-node`.
+- Warnings about "Node.js 20 actions deprecated" refer to GitHub Action internals, not the project runtime.
+- Workflows set `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true`.
 
 ## Agent expectations
 
-1. After changing `api/src/**`, local `npm run lint` and `npm run build` must pass — same checks as API CI.
-2. After changing `api/prisma/schema.prisma` or adding migrations, remind the user that **Database setup** will run on push (or they can trigger it manually in Actions).
-3. Seed uses **upserts** — safe to re-run in CI; do not switch to destructive inserts without discussion.
-4. E2E tests (`npm run test:e2e`) are **not** in CI yet; `app.e2e-spec.ts` is still boilerplate.
+### After `api/` changes
 
-## Local equivalents
+1. `npm run lint` and `npm run build` must pass locally (CI parity).
+2. If Prisma schema or migrations changed, remind that `db-setup.yml` runs on push to `main`.
+3. Seed uses upserts — safe to re-run; do not switch to destructive inserts without discussion.
+
+### After `web/` changes
+
+1. `npm run lint` and `npm run build` must pass locally.
+2. No automated CI gate — manual verification before push.
+
+### General
+
+- Never read or write `api/.env` or `web/.env`.
+- E2E tests (`npm run test:e2e`) are not in CI.
+
+## Local CI parity
 
 ```bash
-# Same as API CI (from api/)
+# API CI (from api/)
 npm ci && npm run db:generate && npm run lint && npm run build && npm run test
 
-# Same as Database setup (from api/)
-npm run db:setup   # generate + migrate deploy + seed
+# Database setup (from api/)
+npm run db:setup
+
+# Web (manual, from web/)
+npm run lint && npm run build
 ```

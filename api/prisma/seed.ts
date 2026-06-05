@@ -24,7 +24,6 @@ const seedPool = new Pool({
 const prisma = new PrismaClient({
   adapter: new PrismaPg(seedPool),
 });
-const SALT_ROUNDS = 12;
 
 const PASSWORDS = {
   admin: 'Admin123!',
@@ -32,7 +31,7 @@ const PASSWORDS = {
 } as const;
 
 async function hashPassword(plain: string): Promise<string> {
-  return bcrypt.hash(plain, SALT_ROUNDS);
+  return bcrypt.hash(plain, 12);
 }
 
 async function seedHeadquarters(): Promise<{

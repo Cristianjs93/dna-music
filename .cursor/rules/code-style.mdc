@@ -2,43 +2,43 @@
 
 ## TypeScript
 
-* `strict: true` in all tsconfig files.
-* Prefer `interface` for public contracts; use `type` for unions and utility types.
-* Use named exports in domain modules; default exports only for page-level React components when applicable.
-* Use `readonly` for immutable DTO properties.
+- `strict: true` in all tsconfig files.
+- Prefer `interface` for public contracts; use `type` for unions and utility types.
+- Use named exports in domain modules; default exports only for page-level React components when applicable.
+- Use `readonly` for immutable DTO properties.
 
 ## Naming Conventions
 
-| Scope               | Convention                                        | Example             |
-| ------------------- | ------------------------------------------------- | ------------------- |
+| Scope               | Convention                                        | Example                |
+| ------------------- | ------------------------------------------------- | ---------------------- |
 | Backend files       | kebab-case                                        | `student.service.ts`   |
 | Classes             | PascalCase                                        | `StudentService`       |
-| Functions/variables | camelCase                                         | `findById`          |
-| Constants           | UPPER_SNAKE_CASE                                  | `MAX_FILE_SIZE`     |
+| Functions/variables | camelCase                                         | `findById`             |
+| Constants           | UPPER_SNAKE_CASE                                  | `MAX_FILE_SIZE`        |
 | Prisma enums        | PascalCase enum name, SCREAMING_SNAKE_CASE values | `StudentStatus.ACTIVE` |
 | React components    | PascalCase file name and export                   | `StudentsTable.tsx`    |
 
 ## Backend
 
-* One module = one folder under `src/modules/`.
-* Controllers: handle HTTP only; delegate logic to services.
-* Services: business logic, transactions, and orchestration.
-* Repositories: the single access point to Prisma per entity.
-* DTOs: Zod schemas + inferred types (`z.infer<typeof schema>`).
+- One module = one folder under `src/modules/`.
+- Controllers: handle HTTP only; delegate logic to services.
+- Services: business logic, transactions, and orchestration.
+- Repositories: the single access point to Prisma per entity.
+- DTOs: Zod schemas + inferred types (`z.infer<typeof schema>`).
 
 ## Frontend
 
-* HTTP services only in `src/services/`.
-* Server state: hooks in `src/hooks/` or within the corresponding module.
-* Presentation vs container components: use clear naming (`UsersTable` vs `UsersPage`).
+- HTTP services only in `src/services/`.
+- Server state: hooks in `src/hooks/` or within the corresponding module.
+- Presentation vs container components: use clear naming (`UsersTable` vs `UsersPage`).
 
 ## Formatting
 
-* Prettier: single quotes, ES5 trailing commas, `printWidth: 100`.
-* ESLint: no warnings in CI; `no-explicit-any` set to error.
+- Prettier: single quotes, ES5 trailing commas, `printWidth: 120`.
+- ESLint: no warnings in CI; `no-explicit-any` set to error.
 
 ## Commit Messages (Reference)
 
-* `feat(module): description`
-* `fix(module): description`
-* `chore: description`
+- `feat(module): description`
+- `fix(module): description`
+- `chore: description`

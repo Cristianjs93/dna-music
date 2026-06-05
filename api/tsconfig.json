@@ -18,7 +18,7 @@
       "#/*": ["src/*"],
       "#generated/prisma": ["generated/prisma/index.d.ts"],
       "#generated/prisma/*": ["generated/prisma/*"],
-      "#libs/*": ["libs/*"],
+      "#util/*": ["src/util/*"],
       "#db/*": ["prisma/*"]
     },
     "incremental": true,

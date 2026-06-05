@@ -3,23 +3,41 @@
 Welcome to the DNA Music ERP Mini-App repository. This project is a monorepo split into a NestJS backend and a React frontend.
 
 ## 📁 Repository Structure & Context Maps
+
 - `api/` -> Backend service (NestJS + TypeScript + Prisma + PostgreSQL)
 - `web/` -> Frontend application (React + TypeScript)
 - `.cursor/rules/` -> Granular AI prompt instructions and constraints
 
 ## 🛠️ Global Orchestration Scripts
+
 To manage development execution blocks, you can read commands directly via the execution guidelines under `.cursor/commands/`:
+
 - **Run Backend**: Reference `.cursor/commands/dev-api`
 - **Run Frontend**: Reference `.cursor/commands/dev-web`
-- **Run Tests**: Reference `.cursor/commands/test` 
+- **Run Tests**: Reference `.cursor/commands/test`
 - **Run Documentation Suite**: Reference `.cursor/commands/swagger`
-- **Database Seed**: Reference `.cursor/commands/db-seed` 
+- **Database Seed**: Reference `.cursor/commands/db-seed`
 
 ## 🤖 AI Alignment & Modular Rules
+
 Please read and closely adhere to our distinct rule manuals situated under `.cursor/rules/` before writing code modifications:
+
 - **Git & Conventional Commits**: `.cursor/rules/commit.md`
 - **Absolute Core Security**: `.cursor/rules/security.md` [cite: 29]
 - **Backend Architecture & Database**: `.cursor/rules/api.md`
 - **Frontend State & Roles Logic**: `.cursor/rules/web.md`
-- **Unit Testing Guidelines**: `.cursor/rules/testing.md` 
+- **Unit Testing Guidelines**: `.cursor/rules/testing.md`
 - **Static Analysis & Formatting (Linter)**: `.cursor/rules/linter.md`
+
+### During Development
+
+1. **Follow each app’s architecture**.
+2. **Keep TypeScript strict** and avoid `any`.
+3. **Run relevant tests** for the code you change.
+4. **Use shared utilities** (e.g. `isDefined` in web) where the project specifies.
+
+### After Changes
+
+1. **Run quality checks** (lint, test, etc.).
+2. **Verify builds** where applicable.
+3. **Update docs/comments** if behavior or contracts change.

@@ -15,6 +15,10 @@ export const STUDENT_DOMAIN_ERRORS = {
     kind: 'Forbidden',
     message: 'You can only access students from your assigned branch',
   } as const satisfies DomainErrorDefinition,
+  operatorHeadquarterMismatch: {
+    kind: 'Forbidden',
+    message: 'headquarterId must match your assigned branch',
+  } as const satisfies DomainErrorDefinition,
   headquarterNotFound: {
     kind: 'NotFound',
     message: 'Headquarter not found',

@@ -35,10 +35,14 @@ export class CreateStudentDto {
   @MaxLength(20)
   identityCard!: string;
 
-  @ApiProperty({ format: 'uuid', description: 'Required for ADMIN; ignored for OPERADOR' })
-  @IsOptional()
+  @ApiProperty({
+    format: 'uuid',
+    description:
+      'Required. ADMIN: any branch. OPERADOR: must send their own assigned headquarterId.',
+  })
   @IsUUID()
-  headquarterId?: string;
+  @IsNotEmpty()
+  headquarterId!: string;
 
   @ApiProperty({ example: 'Producción Musical', maxLength: 100 })
   @IsString()

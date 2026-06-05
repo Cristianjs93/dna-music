@@ -278,8 +278,8 @@ export class StudentsService {
   }
 
   /**
-   * Resolves headquarterId on create: required from DTO for ADMIN, inferred for OPERADOR.
-   * @param dtoHeadquarterId - headquarterId from the request (ADMIN only).
+   * Resolves headquarterId on create. ADMIN: any valid id from DTO. OPERADOR: DTO must match their branch.
+   * @param dtoHeadquarterId - headquarterId from the request body.
    * @param actor - Authenticated user performing the action.
    */
   private resolveHeadquarterIdForWrite(
@@ -288,14 +288,23 @@ export class StudentsService {
   ): string {
     if (actor.role === Role.ADMIN) {
       if (!isDefined(dtoHeadquarterId)) {
-        this.logger.error(`Headquarter not found for ADMIN HeadquarterId=${dtoHeadquarterId}`);
+        this.logger.error(`Headquarter not found for ADMIN headquarterId=${dtoHeadquarterId}`);
         throw domainException(STUDENT_DOMAIN_ERRORS.headquarterNotFound);
       }
 
       return dtoHeadquarterId;
     }
 
-    return this.getOperatorHeadquarterId(actor);
+    const actorHeadquarterId = this.getOperatorHeadquarterId(actor);
+
+    if (dtoHeadquarterId !== actorHeadquarterId) {
+      this.logger.warn(
+        `OPERADOR headquarter mismatch dto=${dtoHeadquarterId} actor=${actorHeadquarterId}`,
+      );
+      throw domainException(STUDENT_DOMAIN_ERRORS.operatorHeadquarterMismatch);
+    }
+
+    return actorHeadquarterId;
   }
 
   /** Returns the OPERADOR's assigned headquarterId or throws if missing.

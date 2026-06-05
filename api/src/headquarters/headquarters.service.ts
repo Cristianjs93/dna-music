@@ -14,6 +14,7 @@ import {
 } from './constants/headquarter-errors.constants';
 import { CreateHeadquarterDto } from './dto/create-headquarter.dto';
 import { UpdateHeadquarterDto } from './dto/update-headquarter.dto';
+import { SetHeadquarterStatusDto } from './dto/set-headquarter-status.dto';
 
 @Injectable()
 export class HeadquartersService {
@@ -21,6 +22,10 @@ export class HeadquartersService {
 
   constructor(private readonly prisma: PrismaService) {}
 
+  /**
+   * Creates a new headquarter; defaults isActive to true when omitted.
+   * @param createHeadquarterDto - Branch fields from the request body.
+   */
   async create(createHeadquarterDto: CreateHeadquarterDto): Promise<HeadquarterPublic> {
     this.logger.log(`Creating headquarter name=${createHeadquarterDto.name}`);
 
@@ -46,10 +51,11 @@ export class HeadquartersService {
     }
   }
 
+  /** Lists all non-deleted headquarters ordered by name. */
   async findAll(): Promise<HeadquarterPublic[]> {
     this.logger.log('Listing headquarters');
     try {
-      const headquarters = this.prisma.headquarter.findMany({
+      const headquarters = await this.prisma.headquarter.findMany({
         where: { deletedAt: null },
         select: headquarterPublicSelect,
         orderBy: { name: 'asc' },
@@ -59,13 +65,17 @@ export class HeadquartersService {
       return headquarters;
     } catch (error: unknown) {
       this.logger.error(
-        'Failed to list users',
+        'Failed to list headquarters',
         error instanceof Error ? error.stack : String(error),
       );
       rethrowPrismaKnownError(error, HEADQUARTER_PRISMA_ERRORS);
     }
   }
 
+  /**
+   * Returns one active headquarter by id.
+   * @param id - Headquarter UUID.
+   */
   async findOne(id: string): Promise<HeadquarterPublic> {
     this.logger.log(`Fetching headquarter id=${id}`);
 
@@ -79,10 +89,43 @@ export class HeadquartersService {
       throw domainException(HEADQUARTER_DOMAIN_ERRORS.headquarterNotFound);
     }
 
-    this.logger.error(`Found headquarter with id=${id}`);
+    this.logger.log(`Found headquarter with id=${id}`);
     return headquarter;
   }
 
+  /**
+   * Activates or deactivates a headquarter without soft-deleting it.
+   * @param id - Headquarter UUID.
+   * @param dto - `{ isActive: true | false }`.
+   */
+  async setStatus(id: string, dto: SetHeadquarterStatusDto): Promise<HeadquarterPublic> {
+    this.logger.log(`Setting headquarter id=${id} isActive=${dto.isActive}`);
+
+    await this.ensureHeadquarterExists(id);
+
+    try {
+      const headquarter = await this.prisma.headquarter.update({
+        where: { id },
+        data: { isActive: dto.isActive },
+        select: headquarterPublicSelect,
+      });
+
+      this.logger.log(`Headquarter status updated id=${id} isActive=${headquarter.isActive}`);
+      return headquarter;
+    } catch (error: unknown) {
+      this.logger.error(
+        `Failed to update headquarter status id=${id}`,
+        error instanceof Error ? error.stack : String(error),
+      );
+      rethrowPrismaKnownError(error, HEADQUARTER_PRISMA_ERRORS);
+    }
+  }
+
+  /**
+   * Updates headquarter details (name, city, address); status changes use setStatus.
+   * @param id - Headquarter UUID.
+   * @param updateHeadquarterDto - Fields to update.
+   */
   async update(id: string, updateHeadquarterDto: UpdateHeadquarterDto): Promise<HeadquarterPublic> {
     this.logger.log(`Updating headquarter id=${id}`);
 
@@ -92,7 +135,6 @@ export class HeadquartersService {
       name: nonEmptyStringOrUndefined(updateHeadquarterDto.name),
       city: nonEmptyStringOrUndefined(updateHeadquarterDto.city),
       address: nonEmptyStringOrUndefined(updateHeadquarterDto.address),
-      isActive: updateHeadquarterDto.isActive,
     };
 
     try {
@@ -113,6 +155,10 @@ export class HeadquartersService {
     }
   }
 
+  /**
+   * Soft-deletes a headquarter by setting deletedAt.
+   * @param id - Headquarter UUID.
+   */
   async remove(id: string): Promise<HeadquarterPublic> {
     this.logger.log(`Soft-deleting headquarter id=${id}`);
 
@@ -136,7 +182,13 @@ export class HeadquartersService {
     }
   }
 
+  /**
+   * Throws if the headquarter does not exist or is soft-deleted.
+   * @param id - Headquarter UUID.
+   */
   private async ensureHeadquarterExists(id: string): Promise<void> {
+    this.logger.log(`Ensuring headquarter exists id=${id}`);
+
     const headquarter = await this.prisma.headquarter.findFirst({
       where: { id, deletedAt: null },
       select: { id: true },
@@ -146,7 +198,7 @@ export class HeadquartersService {
       this.logger.error(`Headquarter not found id=${id}`);
       throw domainException(HEADQUARTER_DOMAIN_ERRORS.headquarterNotFound);
     }
-    this.logger.error(`Found headquarter with id=${id}.`);
+    this.logger.log(`Found headquarter with id=${id}.`);
     return;
   }
 }

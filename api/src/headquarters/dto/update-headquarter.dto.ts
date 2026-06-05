@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class UpdateHeadquarterDto {
   @ApiPropertyOptional({ example: 'Sede Bogotá', maxLength: 150 })
@@ -19,9 +19,4 @@ export class UpdateHeadquarterDto {
   @IsString()
   @MaxLength(255)
   address?: string;
-
-  @ApiPropertyOptional({ example: true })
-  @IsOptional()
-  @IsBoolean()
-  isActive?: boolean;
 }

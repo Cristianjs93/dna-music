@@ -20,6 +20,11 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
+  /**
+   * Authenticates by email/password and returns a signed JWT with the user profile.
+   * Uses dummy bcrypt on unknown emails to mitigate timing attacks.
+   * @param loginDto - Credentials `{ email, password }`.
+   */
   async login(loginDto: LoginDto): Promise<AuthResponseDto> {
     this.logger.log(`Login attempt email=${loginDto.email}`);
 
@@ -52,6 +57,9 @@ export class AuthService {
     return this.buildAuthResponse(publicUser);
   }
 
+  /** Signs a JWT payload and wraps it with the public user profile.
+   * @param user Authenticated user without password.
+   * */
   private buildAuthResponse(user: UserPublic): AuthResponseDto {
     const payload: JwtPayload = {
       sub: user.id,

@@ -26,6 +26,7 @@ import { Role } from '#generated/prisma';
 import { Roles } from '#/auth/decorators/roles.decorator';
 import { CreateHeadquarterDto } from './dto/create-headquarter.dto';
 import { UpdateHeadquarterDto } from './dto/update-headquarter.dto';
+import { SetHeadquarterStatusDto } from './dto/set-headquarter-status.dto';
 import { HeadquarterResponseDto } from './dto/headquarter-response.dto';
 import { HeadquartersService } from './headquarters.service';
 
@@ -62,8 +63,20 @@ export class HeadquartersController {
     return this.headquartersService.findOne(id);
   }
 
+  @Patch(':id/status')
+  @ApiOperation({ summary: 'Activate or deactivate a headquarter (ADMIN only)' })
+  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiOkResponse({ type: HeadquarterResponseDto })
+  @ApiNotFoundResponse({ description: 'Headquarter not found' })
+  setStatus(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() setHeadquarterStatusDto: SetHeadquarterStatusDto,
+  ): Promise<HeadquarterResponseDto> {
+    return this.headquartersService.setStatus(id, setHeadquarterStatusDto);
+  }
+
   @Patch(':id')
-  @ApiOperation({ summary: 'Update a headquarter (ADMIN only)' })
+  @ApiOperation({ summary: 'Update headquarter details — name, city, address (ADMIN only)' })
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiOkResponse({ type: HeadquarterResponseDto })
   @ApiNotFoundResponse({ description: 'Headquarter not found' })

@@ -20,6 +20,10 @@ export class UsersService {
 
   constructor(private readonly prisma: PrismaService) {}
 
+  /**
+   * Creates a user with a bcrypt-hashed password and validates role/headquarter rules.
+   * @param createUserDto - User fields from the request body.
+   */
   async create(createUserDto: CreateUserDto): Promise<UserPublic> {
     this.logger.log(`Creating user email=${createUserDto.email} role=${createUserDto.role}`);
 
@@ -48,6 +52,7 @@ export class UsersService {
     }
   }
 
+  /** Lists all non-deleted users ordered by creation date (newest first). */
   async findAll(): Promise<UserPublic[]> {
     this.logger.log('Listing users');
 
@@ -69,6 +74,10 @@ export class UsersService {
     }
   }
 
+  /**
+   * Returns one active user by id.
+   * @param id - User UUID.
+   */
   async findOne(id: string): Promise<UserPublic> {
     this.logger.log(`Fetching user id=${id}`);
 
@@ -82,10 +91,16 @@ export class UsersService {
       throw domainException(USER_DOMAIN_ERRORS.userNotFound);
     }
 
-    this.logger.error(`Found user with id=${id}`);
+    this.logger.log(`Found user with id=${id}`);
     return user;
   }
 
+  /**
+   * Updates a user. ADMIN may change any user and privileged fields; OPERADOR only their own name/email.
+   * @param id - Target user UUID.
+   * @param updateUserDto - Fields to update.
+   * @param actor - Authenticated user performing the action.
+   */
   async update(
     id: string,
     updateUserDto: UpdateUserDto,
@@ -139,6 +154,10 @@ export class UsersService {
     }
   }
 
+  /**
+   * Soft-deletes a user by setting deletedAt.
+   * @param id - User UUID.
+   */
   async remove(id: string): Promise<UserPublic> {
     this.logger.log(`Soft-deleting user id=${id}`);
 
@@ -162,6 +181,12 @@ export class UsersService {
     }
   }
 
+  /**
+   * Enforces update rules: OPERADOR may only edit their own profile without role/headquarter changes.
+   * @param id - Target user UUID.
+   * @param updateUserDto - Fields requested in the update.
+   * @param actor - Authenticated user performing the action.
+   */
   private assertUpdatePermissions(
     id: string,
     updateUserDto: UpdateUserDto,
@@ -180,10 +205,19 @@ export class UsersService {
     }
   }
 
+  /** Hashes a plain-text password with bcrypt.
+   * @param password Plain-text password.
+   * */
   private hashPassword(password: string): Promise<string> {
     return bcrypt.hash(password, SALT_ROUNDS);
   }
 
+  /**
+   * Resolves headquarterId based on role: null for ADMIN, DTO or current value for OPERADOR.
+   * @param role - Target user role.
+   * @param dtoHeadquarterId - headquarterId from the request, if any.
+   * @param currentHeadquarterId - Existing headquarterId when updating.
+   */
   private resolveHeadquarterId(
     role: Role,
     dtoHeadquarterId: unknown,
@@ -196,6 +230,11 @@ export class UsersService {
     return nonEmptyStringOrElse(dtoHeadquarterId, currentHeadquarterId);
   }
 
+  /**
+   * Validates role/headquarter pairing: OPERADOR requires an active branch; ADMIN must have none.
+   * @param role - User role being assigned.
+   * @param headquarterId - Branch UUID when role is OPERADOR.
+   */
   private async validateHeadquarterAssignment(role: Role, headquarterId?: string): Promise<void> {
     if (role === Role.OPERADOR) {
       if (!isDefined(headquarterId)) {
@@ -223,7 +262,13 @@ export class UsersService {
     }
   }
 
+  /**
+   * Throws if the user does not exist or is soft-deleted.
+   * @param id - User UUID.
+   */
   private async ensureUserExists(id: string): Promise<void> {
+    this.logger.log(`Ensuring user exists id=${id}`);
+
     const user = await this.prisma.user.findFirst({
       where: { id, deletedAt: null },
       select: { id: true },
@@ -233,7 +278,7 @@ export class UsersService {
       this.logger.error(`User not found id=${id}`);
       throw domainException(USER_DOMAIN_ERRORS.userNotFound);
     }
-    this.logger.error(`Found user with id=${id}. Proceeding to soft-delete.`);
+    this.logger.log(`Found user with id=${id}. Proceeding to soft-delete.`);
     return;
   }
 }
